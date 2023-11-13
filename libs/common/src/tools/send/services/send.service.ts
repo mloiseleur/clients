@@ -219,7 +219,7 @@ export class SendService implements InternalSendServiceAbstraction {
         const sendKey = await this.cryptoService.decryptToBytes(send.key);
         send.key = await this.cryptoService.encrypt(sendKey, newUserKey);
         return new SendWithIdRequest(send);
-      })
+      }),
     );
   }
 

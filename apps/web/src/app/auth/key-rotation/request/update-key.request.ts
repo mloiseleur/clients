@@ -5,7 +5,6 @@ import { FolderWithIdRequest } from "@bitwarden/common/src/vault/models/request/
 
 import { EmergencyAccessWithIdRequest } from "../../emergency-access/request/emergency-access-update.request";
 
-
 export class UpdateKeyRequest {
   masterPasswordHash: string;
   key: string;

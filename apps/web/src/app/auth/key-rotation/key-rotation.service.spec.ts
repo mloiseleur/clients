@@ -2,10 +2,10 @@ import { mock, MockProxy } from "jest-mock-extended";
 import { BehaviorSubject } from "rxjs";
 
 import { DeviceTrustCryptoServiceAbstraction } from "@bitwarden/common/auth/abstractions/device-trust-crypto.service.abstraction";
-import { EncryptionType } from "@bitwarden/common/enums";
 import { ConfigServiceAbstraction } from "@bitwarden/common/platform/abstractions/config/config.service.abstraction";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
 import { EncryptService } from "@bitwarden/common/platform/abstractions/encrypt.service";
+import { EncryptionType } from "@bitwarden/common/platform/enums";
 import { EncString } from "@bitwarden/common/platform/models/domain/enc-string";
 import {
   SymmetricCryptoKey,
@@ -21,7 +21,7 @@ import { Folder } from "@bitwarden/common/vault/models/domain/folder";
 import { CipherView } from "@bitwarden/common/vault/models/view/cipher.view";
 import { FolderView } from "@bitwarden/common/vault/models/view/folder.view";
 
-import { AccountRecoveryService } from "../../admin-console/organizations/members/services/account-recovery/account-recovery.service";
+import { OrganizationUserResetPasswordService } from "../../admin-console/organizations/members/services/organization-user-reset-password/organization-user-reset-password.service";
 import { StateService } from "../../core";
 import { EmergencyAccessService } from "../emergency-access";
 
@@ -36,7 +36,7 @@ describe("KeyRotationService", () => {
   let mockFolderService: MockProxy<FolderService>;
   let mockSendService: MockProxy<SendService>;
   let mockEmergencyAccessService: MockProxy<EmergencyAccessService>;
-  let mockAccountRecoveryService: MockProxy<AccountRecoveryService>;
+  let mockResetPasswordService: MockProxy<OrganizationUserResetPasswordService>;
   let mockDeviceTrustCryptoService: MockProxy<DeviceTrustCryptoServiceAbstraction>;
   let mockCryptoService: MockProxy<CryptoService>;
   let mockEncryptService: MockProxy<EncryptService>;
@@ -49,7 +49,7 @@ describe("KeyRotationService", () => {
     mockFolderService = mock<FolderService>();
     mockSendService = mock<SendService>();
     mockEmergencyAccessService = mock<EmergencyAccessService>();
-    mockAccountRecoveryService = mock<AccountRecoveryService>();
+    mockResetPasswordService = mock<OrganizationUserResetPasswordService>();
     mockDeviceTrustCryptoService = mock<DeviceTrustCryptoServiceAbstraction>();
     mockCryptoService = mock<CryptoService>();
     mockEncryptService = mock<EncryptService>();
@@ -62,12 +62,12 @@ describe("KeyRotationService", () => {
       mockFolderService,
       mockSendService,
       mockEmergencyAccessService,
-      mockAccountRecoveryService,
+      mockResetPasswordService,
       mockDeviceTrustCryptoService,
       mockCryptoService,
       mockEncryptService,
       mockStateService,
-      mockConfigService
+      mockConfigService,
     );
   });
 
@@ -121,7 +121,7 @@ describe("KeyRotationService", () => {
         encryptedFolder.id = folder.id;
         encryptedFolder.name = new EncString(
           EncryptionType.AesCbc256_HmacSha256_B64,
-          "Encrypted: " + folder.name
+          "Encrypted: " + folder.name,
         );
         return Promise.resolve(encryptedFolder);
       });
@@ -131,7 +131,7 @@ describe("KeyRotationService", () => {
         encryptedCipher.id = cipher.id;
         encryptedCipher.name = new EncString(
           EncryptionType.AesCbc256_HmacSha256_B64,
-          "Encrypted: " + cipher.name
+          "Encrypted: " + cipher.name,
         );
         return Promise.resolve(encryptedCipher);
       });
@@ -145,7 +145,7 @@ describe("KeyRotationService", () => {
       mockCryptoService.makeMasterKey.mockResolvedValueOnce(null);
 
       await expect(
-        keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword")
+        keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword"),
       ).rejects.toThrow();
     });
 
@@ -153,7 +153,7 @@ describe("KeyRotationService", () => {
       mockCryptoService.makeUserKey.mockResolvedValueOnce([null, null]);
 
       await expect(
-        keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword")
+        keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword"),
       ).rejects.toThrow();
     });
 
@@ -170,14 +170,14 @@ describe("KeyRotationService", () => {
 
       expect(mockApiService.postAccountKey).toHaveBeenCalled();
       expect(mockEmergencyAccessService.postLegacyRotation).toHaveBeenCalled();
-      expect(mockAccountRecoveryService.postLegacyRotation).toHaveBeenCalled();
+      expect(mockResetPasswordService.postLegacyRotation).toHaveBeenCalled();
     });
 
     it("throws if server rotation fails", async () => {
       mockApiService.postAccountKey.mockRejectedValueOnce(new Error("mockError"));
 
       await expect(
-        keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword")
+        keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword"),
       ).rejects.toThrow();
     });
   });
