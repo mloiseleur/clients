@@ -144,7 +144,7 @@ export class AccountRecoveryService {
 
       // Create/Execute request
       const request = new OrganizationUserResetPasswordWithIdRequest();
-      request.orgId = org.id;
+      request.organizationId = org.id;
       request.resetPasswordKey = encryptedKey;
       request.masterPasswordHash = "ignored";
 
@@ -165,7 +165,7 @@ export class AccountRecoveryService {
     }
     for (const request of requests) {
       await this.organizationUserService.putOrganizationUserResetPasswordEnrollment(
-        request.orgId,
+        request.organizationId,
         userId,
         request
       );
