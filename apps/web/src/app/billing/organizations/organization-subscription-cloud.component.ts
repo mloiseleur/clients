@@ -413,7 +413,7 @@ export class OrganizationSubscriptionCloudComponent implements OnInit, OnDestroy
   };
 
   get showChangePlanButton() {
-    return this.subscription == null && this.sub.planType === PlanType.Free && !this.showChangePlan;
+    return this.sub.plan.product !== ProductType.Enterprise && !this.showChangePlan;
   }
 }
 

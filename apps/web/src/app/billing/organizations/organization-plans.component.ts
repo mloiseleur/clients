@@ -61,7 +61,7 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
   @Input() showFree = true;
   @Input() showCancel = false;
   @Input() acceptingSponsorship = false;
-  @Input() currentProductType: ProductType;
+  @Input() currentPlan: PlanResponse;
 
   @Input()
   get product(): ProductType {
@@ -234,9 +234,7 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
         (plan.isAnnual ||
           plan.product === ProductType.Free ||
           plan.product === ProductType.TeamsStarter) &&
-        (this.currentProductType !== ProductType.TeamsStarter ||
-          plan.product === ProductType.Teams ||
-          plan.product === ProductType.Enterprise) &&
+        (!this.currentPlan || this.currentPlan.upgradeSortOrder < plan.upgradeSortOrder) &&
         (!this.providerId || plan.product !== ProductType.TeamsStarter)
     );
 
