@@ -537,19 +537,17 @@ export class AppComponent implements OnInit, OnDestroy {
 
     let preLogoutActiveUserId;
     try {
-      await Promise.all([
-        this.eventUploadService.uploadEvents(userBeingLoggedOut),
-        this.syncService.setLastSync(new Date(0), userBeingLoggedOut),
-        this.cryptoService.clearKeys(userBeingLoggedOut),
-        this.settingsService.clear(userBeingLoggedOut),
-        this.cipherService.clear(userBeingLoggedOut),
-        this.folderService.clear(userBeingLoggedOut),
-        this.collectionService.clear(userBeingLoggedOut),
-        this.passwordGenerationService.clear(userBeingLoggedOut),
-        this.vaultTimeoutSettingsService.clear(userBeingLoggedOut),
-        this.policyService.clear(userBeingLoggedOut),
-        this.keyConnectorService.clear(),
-      ]);
+      await this.eventUploadService.uploadEvents(userBeingLoggedOut);
+      await this.syncService.setLastSync(new Date(0), userBeingLoggedOut);
+      await this.cryptoService.clearKeys(userBeingLoggedOut);
+      await this.settingsService.clear(userBeingLoggedOut);
+      await this.cipherService.clear(userBeingLoggedOut);
+      await this.folderService.clear(userBeingLoggedOut);
+      await this.collectionService.clear(userBeingLoggedOut);
+      await this.passwordGenerationService.clear(userBeingLoggedOut);
+      await this.vaultTimeoutSettingsService.clear(userBeingLoggedOut);
+      await this.policyService.clear(userBeingLoggedOut);
+      await this.keyConnectorService.clear();
 
       preLogoutActiveUserId = this.activeUserId;
       await this.stateService.clean({ userId: userBeingLoggedOut });
