@@ -1,6 +1,5 @@
 import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { Component, OnInit, OnDestroy, Inject } from "@angular/core";
-import { ipcRenderer } from "electron";
 import { Subject } from "rxjs";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
@@ -36,7 +35,7 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
   email: string;
   fingerprintPhrase: string;
   authRequestResponse: AuthRequestResponse;
-  interval: NodeJS.Timer;
+  interval: NodeJS.Timeout;
   requestTimeText: string;
   dismissDialog: boolean;
 
@@ -83,13 +82,13 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
         this.updateTimeText();
       }, RequestTimeUpdate);
 
-      const isVisible = await ipcRenderer.invoke("windowVisible");
+      const isVisible = await ipc.platform.isWindowVisible();
       if (!isVisible) {
-        await ipcRenderer.invoke("loginRequest", {
-          alertTitle: this.i18nService.t("logInRequested"),
-          alertBody: this.i18nService.t("confirmLoginAtemptForMail", this.email),
-          buttonText: this.i18nService.t("close"),
-        });
+        await ipc.auth.loginRequest(
+          this.i18nService.t("logInRequested"),
+          this.i18nService.t("confirmLoginAtemptForMail", this.email),
+          this.i18nService.t("close")
+        );
       }
     }
   }
