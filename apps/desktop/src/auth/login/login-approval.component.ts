@@ -13,7 +13,7 @@ import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.servic
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
-import { DialogModule, ButtonModule } from "@bitwarden/components";
+import { ButtonModule, DialogModule, DialogService } from "@bitwarden/components";
 
 const RequestTimeOut = 60000 * 15; //15 Minutes
 const RequestTimeUpdate = 60000 * 5; //5 Minutes
@@ -26,7 +26,7 @@ export interface LoginApprovalDialogParams {
   selector: "login-approval",
   templateUrl: "login-approval.component.html",
   standalone: true,
-  imports: [DialogModule, JslibModule, ButtonModule],
+  imports: [ButtonModule, DialogModule, JslibModule],
 })
 export class LoginApprovalComponent implements OnInit, OnDestroy {
   notificationId: string;
@@ -92,6 +92,15 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
         });
       }
     }
+  }
+
+  /**
+   * Strongly-typed helper to open a LoginApprovalDialog
+   * @param dialogService Instance of the dialog service that will be used to open the dialog
+   * @param data Configuration for the dialog
+   */
+  static open(dialogService: DialogService, data: LoginApprovalDialogParams) {
+    return dialogService.open(LoginApprovalComponent, { data });
   }
 
   async approveLogin(approveLogin: boolean, approveDenyButtonClicked: boolean) {

@@ -1,4 +1,3 @@
-import { DialogRef } from "@angular/cdk/dialog";
 import {
   Component,
   NgZone,
@@ -108,7 +107,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private lastActivity: number = null;
   private modal: ModalRef = null;
-  private dialog: DialogRef = null;
   private idleTimer: number = null;
   private isIdle = false;
   private activeUserId: string = null;
@@ -397,7 +395,11 @@ export class AppComponent implements OnInit, OnDestroy {
             break;
           case "openLoginApproval":
             if (message.notificationId != null) {
-              await this.openLoginApproval(message.notificationId);
+              this.dialogService.closeAll();
+              const dialogRef = LoginApprovalComponent.open(this.dialogService, {
+                notificationId: message.notificationId,
+              });
+              await firstValueFrom(dialogRef.closed);
             }
             break;
           case "redrawMenu":
@@ -468,19 +470,6 @@ export class AppComponent implements OnInit, OnDestroy {
     // eslint-disable-next-line rxjs-angular/prefer-takeuntil
     this.modal.onClosed.subscribe(() => {
       this.modal = null;
-    });
-  }
-
-  async openLoginApproval(notificationId: string) {
-    this.dialogService.closeAll();
-
-    this.dialog = this.dialogService.open(LoginApprovalComponent, {
-      data: { notificationId: notificationId },
-    });
-
-    // eslint-disable-next-line rxjs-angular/prefer-takeuntil
-    this.dialog.closed.subscribe(() => {
-      this.dialog = null;
     });
   }
 
