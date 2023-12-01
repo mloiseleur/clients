@@ -1,7 +1,7 @@
-<bit-dialog>
-  <div bitDialogTitle>{{ "areYouTryingtoLogin" | i18n }}</div>
-  <div bitDialogContent>
-    <p>{{ "logInAttemptBy" | i18n : email }}</p>
+<bit-dialog #dialog>
+  <span bitDialogTitle>{{ "areYouTryingtoLogin" | i18n }}</span>
+  <ng-container bitDialogContent>
+    <p>{{ "logInAttemptBy" | i18n: email }}</p>
     <div>
       <b>{{ "fingerprintPhraseHeader" | i18n }}</b>
       <p class="fingerprint-text">{{ fingerprintPhrase }}</p>
@@ -18,19 +18,13 @@
       <b>{{ "time" | i18n }}</b>
       <p>{{ requestTimeText }}</p>
     </div>
-  </div>
-  <div bitDialogFooter>
-    <button bitButton type="button" buttonType="primary" (click)="approveLogin(true, true)">
-      {{ "confirmLogIn" | i18n }}
+  </ng-container>
+  <ng-container bitDialogFooter>
+    <button bitButton type="button" buttonType="primary" [bitAction]="approveLogin">
+      {{ "confirmLogin" | i18n }}
     </button>
-    <button
-      bitButton
-      type="button"
-      buttonType="secondary"
-      bitDialogClose
-      (click)="approveLogin(false, true)"
-    >
-      {{ "denyLogIn" | i18n }}
+    <button bitButton type="button" buttonType="secondary" [bitAction]="denyLogin">
+      {{ "denyLogin" | i18n }}
     </button>
-  </div>
+  </ng-container>
 </bit-dialog>
