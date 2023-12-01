@@ -582,13 +582,3 @@ app-vault-view .box-footer {
 .box-footer a {
   line-height: 1;
 }
-
-div {
-  @include themify($themes) {
-    .fingerprint-text {
-      color: themed("codeColor");
-      font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-        monospace;
-    }
-  }
-}
