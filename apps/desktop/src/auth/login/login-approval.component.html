@@ -1,10 +1,10 @@
-<bit-dialog #dialog>
+<bit-dialog>
   <span bitDialogTitle>{{ "areYouTryingtoLogin" | i18n }}</span>
   <ng-container bitDialogContent>
     <p>{{ "logInAttemptBy" | i18n: email }}</p>
     <div>
       <b>{{ "fingerprintPhraseHeader" | i18n }}</b>
-      <p class="fingerprint-text">{{ fingerprintPhrase }}</p>
+      <p class="tw-text-code">{{ fingerprintPhrase }}</p>
     </div>
     <div>
       <b>{{ "deviceType" | i18n }}</b>
@@ -20,11 +20,23 @@
     </div>
   </ng-container>
   <ng-container bitDialogFooter>
-    <button bitButton type="button" buttonType="primary" [bitAction]="approveLogin">
-      {{ "confirmLogin" | i18n }}
+    <button
+      bitButton
+      type="button"
+      buttonType="primary"
+      [bitAction]="approveLogin"
+      [bitDialogClose]="true"
+    >
+      {{ "confirmLogIn" | i18n }}
     </button>
-    <button bitButton type="button" buttonType="secondary" [bitAction]="denyLogin">
-      {{ "denyLogin" | i18n }}
+    <button
+      bitButton
+      type="button"
+      buttonType="secondary"
+      [bitAction]="denyLogin"
+      [bitDialogClose]="true"
+    >
+      {{ "denyLogIn" | i18n }}
     </button>
   </ng-container>
 </bit-dialog>

@@ -1,7 +1,7 @@
 import { DIALOG_DATA, DialogRef } from "@angular/cdk/dialog";
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, OnDestroy, Inject } from "@angular/core";
-import { Subject, takeUntil } from "rxjs";
+import { Subject, firstValueFrom } from "rxjs";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
 import { ApiService } from "@bitwarden/common/abstractions/api.service";
@@ -43,7 +43,6 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
   authRequestResponse: AuthRequestResponse;
   interval: NodeJS.Timeout;
   requestTimeText: string;
-  processingResponse = false;
 
   constructor(
     @Inject(DIALOG_DATA) private params: LoginApprovalDialogParams,
@@ -59,17 +58,17 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
     this.notificationId = params.notificationId;
   }
 
-  ngOnDestroy(): void {
+  async ngOnDestroy(): Promise<void> {
     clearInterval(this.interval);
+    const closedWithButton = await firstValueFrom(this.dialogRef.closed);
+    if (!closedWithButton) {
+      this.retrieveAuthRequestAndRespond(false);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   async ngOnInit() {
-    this.dialogRef.closed.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      clearInterval(this.interval);
-    });
-
     if (this.notificationId != null) {
       this.authRequestResponse = await this.apiService.getAuthRequest(this.notificationId);
       const publicKey = Utils.fromB64ToArray(this.authRequestResponse.publicKey);
@@ -105,16 +104,13 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
 
   denyLogin = async () => {
     await this.retrieveAuthRequestAndRespond(false);
-    this.dialogRef.close();
   };
 
   approveLogin = async () => {
     await this.retrieveAuthRequestAndRespond(true);
-    this.dialogRef.close();
   };
 
   private async retrieveAuthRequestAndRespond(approve: boolean) {
-    this.processingResponse = true;
     this.authRequestResponse = await this.apiService.getAuthRequest(this.notificationId);
     if (this.authRequestResponse.requestApproved || this.authRequestResponse.responseDate != null) {
       this.platformUtilsService.showToast(
@@ -130,7 +126,6 @@ export class LoginApprovalComponent implements OnInit, OnDestroy {
       );
       this.showResultToast(loginResponse);
     }
-    this.processingResponse = false;
   }
 
   showResultToast(loginResponse: AuthRequestResponse) {
