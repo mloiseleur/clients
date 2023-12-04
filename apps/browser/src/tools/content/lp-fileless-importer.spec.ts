@@ -47,7 +47,7 @@ describe("LpFilelessImporter", () => {
       expect(document.createElement).toHaveBeenCalledWith("script");
       expect(document.documentElement.appendChild).toHaveBeenCalled();
       expect(script.textContent).toContain(
-        "const defaultAppendChild = Element.prototype.appendChild;"
+        "const defaultAppendChild = Element.prototype.appendChild;",
       );
     });
   });
@@ -60,7 +60,7 @@ describe("LpFilelessImporter", () => {
 
       expect(globalThis.postMessage).toHaveBeenCalledWith(
         { command: "triggerCsvDownload" },
-        "https://lastpass.com"
+        "https://lastpass.com",
       );
     });
   });

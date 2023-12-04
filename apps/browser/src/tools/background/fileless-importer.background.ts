@@ -19,7 +19,7 @@ class FilelessImporterBackground implements FilelessImporterBackgroundInterface 
   constructor(
     private configService: ConfigServiceAbstraction,
     private authService: AuthService,
-    private policyService: PolicyService
+    private policyService: PolicyService,
   ) {}
 
   /**
@@ -34,7 +34,7 @@ class FilelessImporterBackground implements FilelessImporterBackgroundInterface 
    */
   private async removeIndividualVault(): Promise<boolean> {
     return await firstValueFrom(
-      this.policyService.policyAppliesToActiveUser$(PolicyType.PersonalOwnership)
+      this.policyService.policyAppliesToActiveUser$(PolicyType.PersonalOwnership),
     );
   }
 
@@ -57,7 +57,7 @@ class FilelessImporterBackground implements FilelessImporterBackgroundInterface 
     }
 
     const filelessImportFeatureFlagEnabled = await this.configService.getFeatureFlag<boolean>(
-      FeatureFlag.BrowserFilelessImport
+      FeatureFlag.BrowserFilelessImport,
     );
     const userAuthStatus = await this.authService.getAuthStatus();
     const removeIndividualVault = await this.removeIndividualVault();

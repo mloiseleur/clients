@@ -55,7 +55,7 @@ describe("FilelessImporterBackground ", () => {
     filelessImporterBackground = new FilelessImporterBackground(
       configService,
       authService,
-      policyService
+      policyService,
     );
     filelessImporterBackground.init();
   });
