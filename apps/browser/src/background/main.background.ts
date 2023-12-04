@@ -693,7 +693,6 @@ export default class MainBackground {
       this.notificationBackground,
       this.overlayBackground,
     );
-
     if (!this.popupOnlyContext) {
       const contextMenuClickedHandler = new ContextMenuClickedHandler(
         (options) => this.platformUtilsService.copyToClipboard(options.text, { window: self }),
