@@ -4,58 +4,37 @@ import { PolicyService } from "@bitwarden/common/admin-console/services/policy/p
 import { AuthenticationStatus } from "@bitwarden/common/auth/enums/authentication-status";
 import { AuthService } from "@bitwarden/common/auth/services/auth.service";
 import { ConfigService } from "@bitwarden/common/platform/services/config/config.service";
+import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
+import { Importer, ImportResult, ImportServiceAbstraction } from "@bitwarden/importer/core";
 
-import { FilelessImportPortNames } from "../enums/fileless-import.enums";
+import NotificationBackground from "../../autofill/background/notification.background";
+import { createPortSpyMock } from "../../autofill/jest/autofill-mocks";
+import {
+  flushPromises,
+  sendPortMessage,
+  triggerRuntimeOnConnectEvent,
+} from "../../autofill/jest/testing-utils";
+import { FilelessImportPort, FilelessImportType } from "../enums/fileless-import.enums";
 
 import FilelessImporterBackground from "./fileless-importer.background";
-
-type PortMock = chrome.runtime.Port & { onMessage: { callListener: (message: any) => void } };
-type OnConnectMock = chrome.runtime.ExtensionConnectEvent & {
-  callListener: (port: PortMock) => Promise<void>;
-};
-
-function createPortMock(name: string): PortMock {
-  let onMessageCallback: CallableFunction;
-
-  const port: PortMock = mock<PortMock>({
-    name,
-    onMessage: {
-      addListener: jest.fn((callback) => (onMessageCallback = callback)),
-      callListener: async (message: any) => onMessageCallback(message, port),
-    },
-  });
-  return port;
-}
-
-function setupOnConnectMock() {
-  let onConnectCallback: CallableFunction;
-
-  chrome.runtime.onConnect = {
-    addListener: jest.fn((callback) => (onConnectCallback = callback)),
-    removeRules: jest.fn(),
-    hasListener: jest.fn(),
-    getRules: jest.fn(),
-    addRules: jest.fn(),
-    removeListener: jest.fn(),
-    hasListeners: jest.fn(),
-    callListener: (port: PortMock) => onConnectCallback(port),
-  } as OnConnectMock;
-}
 
 describe("FilelessImporterBackground ", () => {
   let filelessImporterBackground: FilelessImporterBackground;
   const configService = mock<ConfigService>();
   const authService = mock<AuthService>();
   const policyService = mock<PolicyService>();
-  let onConnectMock: OnConnectMock;
+  const notificationBackground = mock<NotificationBackground>();
+  const importService = mock<ImportServiceAbstraction>();
+  const syncService = mock<SyncService>();
 
   beforeEach(() => {
-    setupOnConnectMock();
-    onConnectMock = chrome.runtime.onConnect as OnConnectMock;
     filelessImporterBackground = new FilelessImporterBackground(
       configService,
       authService,
       policyService,
+      notificationBackground,
+      importService,
+      syncService,
     );
     filelessImporterBackground.init();
   });
@@ -71,7 +50,10 @@ describe("FilelessImporterBackground ", () => {
   });
 
   describe("handle ports onConnect", () => {
+    let lpImporterPort: chrome.runtime.Port;
+
     beforeEach(() => {
+      lpImporterPort = createPortSpyMock(FilelessImportPort.LpImporter);
       jest.spyOn(authService, "getAuthStatus").mockResolvedValue(AuthenticationStatus.Unlocked);
       jest.spyOn(configService, "getFeatureFlag").mockResolvedValue(true);
       jest
@@ -80,60 +62,230 @@ describe("FilelessImporterBackground ", () => {
     });
 
     it("ignores the port connection if the port name is not present in the set of filelessImportNames", async () => {
-      const port = createPortMock("some-other-port");
+      const port = createPortSpyMock("some-other-port");
 
-      await onConnectMock.callListener(port);
+      triggerRuntimeOnConnectEvent(port);
+      await flushPromises();
 
       expect(port.postMessage).not.toHaveBeenCalled();
     });
 
     it("posts a message to the port indicating that the fileless import feature is disabled if the user's auth status is not unlocked", async () => {
-      const port = createPortMock(FilelessImportPortNames.LpImporter);
       jest.spyOn(authService, "getAuthStatus").mockResolvedValue(AuthenticationStatus.Locked);
 
-      await onConnectMock.callListener(port);
+      triggerRuntimeOnConnectEvent(lpImporterPort);
+      await flushPromises();
 
-      expect(port.postMessage).toHaveBeenCalledWith({
+      expect(lpImporterPort.postMessage).toHaveBeenCalledWith({
         command: "verifyFeatureFlag",
         filelessImportEnabled: false,
       });
     });
 
     it("posts a message to the port indicating that the fileless import feature is disabled if the user's policy removes individual vaults", async () => {
-      const port = createPortMock(FilelessImportPortNames.LpImporter);
       jest
         .spyOn(filelessImporterBackground as any, "removeIndividualVault")
         .mockResolvedValue(true);
 
-      await onConnectMock.callListener(port);
+      triggerRuntimeOnConnectEvent(lpImporterPort);
+      await flushPromises();
 
-      expect(port.postMessage).toHaveBeenCalledWith({
+      expect(lpImporterPort.postMessage).toHaveBeenCalledWith({
         command: "verifyFeatureFlag",
         filelessImportEnabled: false,
       });
     });
 
     it("posts a message to the port indicating that the fileless import feature is disabled if the feature flag is turned off", async () => {
-      const port = createPortMock(FilelessImportPortNames.LpImporter);
       jest.spyOn(configService, "getFeatureFlag").mockResolvedValue(false);
 
-      await onConnectMock.callListener(port);
+      triggerRuntimeOnConnectEvent(lpImporterPort);
+      await flushPromises();
 
-      expect(port.postMessage).toHaveBeenCalledWith({
+      expect(lpImporterPort.postMessage).toHaveBeenCalledWith({
         command: "verifyFeatureFlag",
         filelessImportEnabled: false,
       });
     });
 
     it("posts a message to the port indicating that the fileless import feature is enabled", async () => {
-      const port = createPortMock(FilelessImportPortNames.LpImporter);
+      triggerRuntimeOnConnectEvent(lpImporterPort);
+      await flushPromises();
 
-      await onConnectMock.callListener(port);
-
-      expect(port.postMessage).toHaveBeenCalledWith({
+      expect(lpImporterPort.postMessage).toHaveBeenCalledWith({
         command: "verifyFeatureFlag",
         filelessImportEnabled: true,
       });
+    });
+  });
+
+  describe("port messages", () => {
+    let notificationPort: chrome.runtime.Port;
+    let lpImporterPort: chrome.runtime.Port;
+
+    beforeEach(async () => {
+      jest.spyOn(authService, "getAuthStatus").mockResolvedValue(AuthenticationStatus.Unlocked);
+      jest.spyOn(configService, "getFeatureFlag").mockResolvedValue(true);
+      jest
+        .spyOn(filelessImporterBackground as any, "removeIndividualVault")
+        .mockResolvedValue(false);
+      triggerRuntimeOnConnectEvent(createPortSpyMock(FilelessImportPort.NotificationBar));
+      triggerRuntimeOnConnectEvent(createPortSpyMock(FilelessImportPort.LpImporter));
+      await flushPromises();
+      notificationPort = filelessImporterBackground["importNotificationsPort"];
+      lpImporterPort = filelessImporterBackground["lpImporterPort"];
+    });
+
+    it("skips handling a message if a message handler is not associated with the port message command", () => {
+      sendPortMessage(notificationPort, { command: "commandNotFound" });
+
+      expect(chrome.tabs.sendMessage).not.toHaveBeenCalled();
+    });
+
+    describe("import notification port messages", () => {
+      describe("startFilelessImport", () => {
+        it("sends a message to start the fileless import within the content script", () => {
+          sendPortMessage(notificationPort, {
+            command: "startFilelessImport",
+            importType: FilelessImportType.LP,
+          });
+
+          expect(lpImporterPort.postMessage).toHaveBeenCalledWith({
+            command: "startLpFilelessImport",
+          });
+        });
+      });
+
+      describe("cancelFilelessImport", () => {
+        it("sends a message to close the notification bar", async () => {
+          sendPortMessage(notificationPort, { command: "cancelFilelessImport" });
+
+          expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+            1,
+            {
+              command: "closeNotificationBar",
+            },
+            null,
+            expect.anything(),
+          );
+          expect(lpImporterPort.postMessage).not.toHaveBeenCalledWith({
+            command: "triggerCsvDownload",
+          });
+        });
+
+        it("triggers a download of the LP importer CSV", () => {
+          sendPortMessage(notificationPort, {
+            command: "cancelFilelessImport",
+            importType: FilelessImportType.LP,
+          });
+
+          expect(lpImporterPort.postMessage).toHaveBeenCalledWith({
+            command: "triggerCsvDownload",
+          });
+          expect(lpImporterPort.disconnect).toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe("lp importer port messages", () => {
+      describe("displayLpImportNotification", () => {
+        it("creates a request fileless import notification", async () => {
+          jest.spyOn(filelessImporterBackground["notificationBackground"], "requestFilelessImport");
+
+          sendPortMessage(lpImporterPort, {
+            command: "displayLpImportNotification",
+          });
+          await flushPromises();
+
+          expect(
+            filelessImporterBackground["notificationBackground"].requestFilelessImport,
+          ).toHaveBeenCalledWith(lpImporterPort.sender.tab, FilelessImportType.LP);
+        });
+      });
+
+      describe("startLpImport", () => {
+        it("ignores the message if the message does not contain data", () => {
+          sendPortMessage(lpImporterPort, {
+            command: "startLpImport",
+          });
+
+          expect(filelessImporterBackground["importService"].import).not.toHaveBeenCalled();
+        });
+
+        it("triggers the import of the LastPass vault", async () => {
+          const data = "url,username,password";
+          const importer = mock<Importer>();
+          jest
+            .spyOn(filelessImporterBackground["importService"], "getImporter")
+            .mockReturnValue(importer);
+          jest.spyOn(filelessImporterBackground["importService"], "import").mockResolvedValue(
+            mock<ImportResult>({
+              success: true,
+            }),
+          );
+          jest.spyOn(filelessImporterBackground["syncService"], "fullSync");
+
+          sendPortMessage(lpImporterPort, {
+            command: "startLpImport",
+            data,
+          });
+          await flushPromises();
+
+          expect(filelessImporterBackground["importService"].import).toHaveBeenCalledWith(
+            importer,
+            data,
+            null,
+            null,
+            false,
+          );
+          expect(
+            filelessImporterBackground["importNotificationsPort"].postMessage,
+          ).toHaveBeenCalledWith({ command: "filelessImportCompleted" });
+          expect(filelessImporterBackground["syncService"].fullSync).toHaveBeenCalledWith(true);
+        });
+
+        it("posts a failed message if the import fails", async () => {
+          const data = "url,username,password";
+          const importer = mock<Importer>();
+          jest
+            .spyOn(filelessImporterBackground["importService"], "getImporter")
+            .mockReturnValue(importer);
+          jest
+            .spyOn(filelessImporterBackground["importService"], "import")
+            .mockImplementation(() => {
+              throw new Error("error");
+            });
+          jest.spyOn(filelessImporterBackground["syncService"], "fullSync");
+
+          sendPortMessage(lpImporterPort, {
+            command: "startLpImport",
+            data,
+          });
+          await flushPromises();
+
+          expect(
+            filelessImporterBackground["importNotificationsPort"].postMessage,
+          ).toHaveBeenCalledWith({ command: "filelessImportFailed" });
+        });
+      });
+    });
+  });
+
+  describe("handleImporterPortDisconnect", () => {
+    it("resets the port properties to null", () => {
+      const lpImporterPort = createPortSpyMock(FilelessImportPort.LpImporter);
+      const notificationPort = createPortSpyMock(FilelessImportPort.NotificationBar);
+      filelessImporterBackground["lpImporterPort"] = lpImporterPort;
+      filelessImporterBackground["importNotificationsPort"] = notificationPort;
+
+      filelessImporterBackground["handleImporterPortDisconnect"](lpImporterPort);
+
+      expect(filelessImporterBackground["lpImporterPort"]).toBeNull();
+      expect(filelessImporterBackground["importNotificationsPort"]).not.toBeNull();
+
+      filelessImporterBackground["handleImporterPortDisconnect"](notificationPort);
+
+      expect(filelessImporterBackground["importNotificationsPort"]).toBeNull();
     });
   });
 });

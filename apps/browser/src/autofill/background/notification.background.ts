@@ -20,6 +20,7 @@ import { NOTIFICATION_BAR_LIFESPAN_MS } from "../constants";
 import AddChangePasswordQueueMessage from "../notification/models/add-change-password-queue-message";
 import AddLoginQueueMessage from "../notification/models/add-login-queue-message";
 import AddLoginRuntimeMessage from "../notification/models/add-login-runtime-message";
+import AddRequestFilelessImportQueueMessage from "../notification/models/add-request-fileless-import-queue-message";
 import AddUnlockVaultQueueMessage from "../notification/models/add-unlock-vault-queue-message";
 import ChangePasswordRuntimeMessage from "../notification/models/change-password-runtime-message";
 import LockedVaultPendingNotificationsItem from "../notification/models/locked-vault-pending-notifications-item";
@@ -31,6 +32,7 @@ export default class NotificationBackground {
     | AddLoginQueueMessage
     | AddChangePasswordQueueMessage
     | AddUnlockVaultQueueMessage
+    | AddRequestFilelessImportQueueMessage
   )[] = [];
 
   constructor(
@@ -172,38 +174,52 @@ export default class NotificationBackground {
     }
 
     for (let i = 0; i < this.notificationQueue.length; i++) {
+      const notificationQueueMessage = this.notificationQueue[i];
       if (
-        this.notificationQueue[i].tab.id !== tab.id ||
-        this.notificationQueue[i].domain !== tabDomain
+        notificationQueueMessage.tab.id !== tab.id ||
+        notificationQueueMessage.domain !== tabDomain
       ) {
         continue;
       }
 
-      if (this.notificationQueue[i].type === NotificationQueueMessageType.AddLogin) {
+      if (notificationQueueMessage.type === NotificationQueueMessageType.AddLogin) {
         BrowserApi.tabSendMessageData(tab, "openNotificationBar", {
           type: "add",
           typeData: {
-            isVaultLocked: this.notificationQueue[i].wasVaultLocked,
+            isVaultLocked: notificationQueueMessage.wasVaultLocked,
             theme: await this.getCurrentTheme(),
             removeIndividualVault: await this.removeIndividualVault(),
             webVaultURL: await this.environmentService.getWebVaultUrl(),
           },
         });
-      } else if (this.notificationQueue[i].type === NotificationQueueMessageType.ChangePassword) {
+      } else if (notificationQueueMessage.type === NotificationQueueMessageType.ChangePassword) {
         BrowserApi.tabSendMessageData(tab, "openNotificationBar", {
           type: "change",
           typeData: {
-            isVaultLocked: this.notificationQueue[i].wasVaultLocked,
+            isVaultLocked: notificationQueueMessage.wasVaultLocked,
             theme: await this.getCurrentTheme(),
             webVaultURL: await this.environmentService.getWebVaultUrl(),
           },
         });
-      } else if (this.notificationQueue[i].type === NotificationQueueMessageType.UnlockVault) {
+      } else if (notificationQueueMessage.type === NotificationQueueMessageType.UnlockVault) {
         BrowserApi.tabSendMessageData(tab, "openNotificationBar", {
           type: "unlock",
           typeData: {
-            isVaultLocked: this.notificationQueue[i].wasVaultLocked,
+            isVaultLocked: notificationQueueMessage.wasVaultLocked,
             theme: await this.getCurrentTheme(),
+          },
+        });
+      } else if (
+        notificationQueueMessage.type === NotificationQueueMessageType.RequestFilelessImport
+      ) {
+        BrowserApi.tabSendMessageData(tab, "openNotificationBar", {
+          type: "fileless-import",
+          typeData: {
+            isVaultLocked: notificationQueueMessage.wasVaultLocked,
+            theme: await this.getCurrentTheme(),
+            webVaultURL: await this.environmentService.getWebVaultUrl(),
+            importType: (notificationQueueMessage as AddRequestFilelessImportQueueMessage)
+              .importType,
           },
         });
       }
@@ -358,6 +374,27 @@ export default class NotificationBackground {
     this.pushUnlockVaultToQueue(loginDomain, tab);
   }
 
+  /**
+   * Sets up a notification to request a fileless import when the user
+   * attempts to trigger an import from a third party website.
+   *
+   * @param tab - The tab that we are sending the notification to
+   * @param importType - The type of import that is being requested
+   */
+  async requestFilelessImport(tab: chrome.tabs.Tab, importType: string) {
+    const currentAuthStatus = await this.authService.getAuthStatus();
+    if (currentAuthStatus !== AuthenticationStatus.Unlocked || this.notificationQueue.length) {
+      return;
+    }
+
+    const loginDomain = Utils.getDomain(tab.url);
+    if (!loginDomain) {
+      return;
+    }
+
+    this.pushRequestFilelessImportToQueue(loginDomain, tab, importType);
+  }
+
   private async pushChangePasswordToQueue(
     cipherId: string,
     loginDomain: string,
@@ -388,6 +425,34 @@ export default class NotificationBackground {
       tab: tab,
       expires: new Date(new Date().getTime() + 0.5 * 60000), // 30 seconds
       wasVaultLocked: true,
+    };
+    this.notificationQueue.push(message);
+    await this.checkNotificationQueue(tab);
+    this.removeTabFromNotificationQueue(tab);
+  }
+
+  /**
+   * Pushes a request to start a fileless import to the notification queue.
+   * This will display a notification bar to the user, prompting them to
+   * start the import.
+   *
+   * @param loginDomain - The domain of the tab that we are sending the notification to
+   * @param tab - The tab that we are sending the notification to
+   * @param importType - The type of import that is being requested
+   */
+  private async pushRequestFilelessImportToQueue(
+    loginDomain: string,
+    tab: chrome.tabs.Tab,
+    importType?: string,
+  ) {
+    this.removeTabFromNotificationQueue(tab);
+    const message: AddRequestFilelessImportQueueMessage = {
+      type: NotificationQueueMessageType.RequestFilelessImport,
+      domain: loginDomain,
+      tab,
+      expires: new Date(new Date().getTime() + 0.5 * 60000), // 30 seconds
+      wasVaultLocked: false,
+      importType,
     };
     this.notificationQueue.push(message);
     await this.checkNotificationQueue(tab);

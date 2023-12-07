@@ -688,6 +688,9 @@ export default class MainBackground {
       this.configService,
       this.authService,
       this.policyService,
+      this.notificationBackground,
+      this.importService,
+      this.syncService,
     );
     this.tabsBackground = new TabsBackground(
       this,
