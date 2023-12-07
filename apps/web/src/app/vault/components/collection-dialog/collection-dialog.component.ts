@@ -3,7 +3,6 @@ import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from "@angula
 import { AbstractControl, FormBuilder, Validators } from "@angular/forms";
 import {
   combineLatest,
-  firstValueFrom,
   from,
   map,
   Observable,
@@ -136,10 +135,6 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       this.formGroup.patchValue({ selectedOrg: this.params.organizationId });
       await this.loadOrg(this.params.organizationId, this.params.collectionIds);
     }
-
-    if (await firstValueFrom(this.flexibleCollectionsEnabled$)) {
-      this.formGroup.controls.access.addValidators(validateCanManagePermission);
-    }
   }
 
   async loadOrg(orgId: string, collectionIds: string[]) {
@@ -165,7 +160,7 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       users: this.organizationUserService.getAllUsers(orgId),
       flexibleCollections: this.flexibleCollectionsEnabled$,
       allowAdminAccessToAllCollectionItems: this.organizationApiService
-        .get(this.params.organizationId)
+        .get(orgId)
         .then((orgResponse) => orgResponse.allowAdminAccessToAllCollectionItems),
     })
       .pipe(takeUntil(this.formGroup.controls.selectedOrg.valueChanges), takeUntil(this.destroy$))
@@ -235,6 +230,12 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
           }
 
           this.allowAdminAccessToAllCollectionItems = allowAdminAccessToAllCollectionItems;
+          if (flexibleCollections && !allowAdminAccessToAllCollectionItems) {
+            this.formGroup.controls.access.addValidators(validateCanManagePermission);
+          } else {
+            this.formGroup.controls.access.removeValidators(validateCanManagePermission);
+          }
+          this.formGroup.controls.access.updateValueAndValidity();
 
           this.loading = false;
         },

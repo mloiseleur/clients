@@ -72,10 +72,7 @@
           </div>
           <div
             class="tw-mb-3 tw-text-danger"
-            *ngIf="
-              formGroup.controls.access.hasError('managePermissionRequired') &&
-              !allowAdminAccessToAllCollectionItems
-            "
+            *ngIf="formGroup.controls.access.hasError('managePermissionRequired')"
           >
             <i class="bwi bwi-error"></i> {{ "managePermissionRequired" | i18n }}
           </div>
