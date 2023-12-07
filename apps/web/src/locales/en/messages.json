@@ -7415,7 +7415,7 @@
         "example": "Unique ID"
       }
     }
-  },  
+  },
   "seeDetailedInstructions": {
     "message": "See detailed instructions on our help site at",
     "description": "This is followed a by a hyperlink to the help website."
@@ -7443,5 +7443,8 @@
   },
   "adminCollectionAccess": {
     "message": "Administrators can access and manage collections."
+  },
+  "serviceAccountAccessUpdated": {
+    "message": "Service account access updated"
   }
 }
