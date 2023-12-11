@@ -199,11 +199,16 @@ export class OnePassword1PuxImporter extends BaseImporter implements Importer {
         return;
       }
 
-      this.parseSectionFields(category, section.fields, cipher);
+      this.parseSectionFields(category, section.fields, cipher, section.title);
     });
   }
 
-  private parseSectionFields(category: CategoryEnum, fields: FieldsEntity[], cipher: CipherView) {
+  private parseSectionFields(
+    category: CategoryEnum,
+    fields: FieldsEntity[],
+    cipher: CipherView,
+    sectionTitle: string
+  ) {
     fields.forEach((field: FieldsEntity) => {
       const valueKey = Object.keys(field.value)[0];
       const anyField = field as any;
@@ -216,7 +221,7 @@ export class OnePassword1PuxImporter extends BaseImporter implements Importer {
         return;
       }
 
-      const fieldName = this.getFieldName(field.id, field.title);
+      const fieldName = this.getFieldName(field.id, field.title, sectionTitle);
       const fieldValue = this.extractValue(field.value, valueKey);
 
       if (cipher.type === CipherType.Login) {
@@ -338,16 +343,12 @@ export class OnePassword1PuxImporter extends BaseImporter implements Importer {
     });
   }
 
-  private getFieldName(id: string, title: string): string {
-    if (this.isNullOrWhitespace(title)) {
-      return id;
-    }
-
-    // Naive approach of checking if the fields id is usable
-    if (id.length > 25 && RegExp(/[0-9]{2}[A-Z]{2}/, "i").test(id)) {
-      return title;
-    }
-    return id;
+  private getFieldName(id: string, title: string, sectionTitle?: string): string {
+    return !this.isNullOrWhitespace(title)
+      ? title
+      : !this.isNullOrWhitespace(sectionTitle)
+      ? sectionTitle
+      : "";
   }
 
   private extractValue(value: Value, valueKey: string): string {
@@ -451,7 +452,7 @@ export class OnePassword1PuxImporter extends BaseImporter implements Importer {
     field: FieldsEntity,
     fieldValue: string,
     cipher: CipherView,
-    valueKey: string,
+    valueKey: string
   ): boolean {
     if (this.isNullOrWhitespace(cipher.identity.firstName) && field.id === "firstname") {
       cipher.identity.firstName = fieldValue;
