@@ -40,7 +40,7 @@ function validateCustomField(fields: FieldView[], fieldName: string, expectedVal
 function validateDuplicateCustomField(
   fields: FieldView[],
   fieldName: string,
-  expectedValues: any[]
+  expectedValues: any[],
 ) {
   expect(fields).toBeDefined();
   const customFieldValues = fields
@@ -314,7 +314,7 @@ describe("1Password 1Pux Importer", () => {
     validateCustomField(
       cipher.fields,
       "download page",
-      "https://limuxcompany.nullvalue.test/5.10.1000/isos"
+      "https://limuxcompany.nullvalue.test/5.10.1000/isos",
     );
     validateCustomField(cipher.fields, "publisher", "Limux Software and Hardware");
     validateCustomField(cipher.fields, "website", "https://limuxcompany.nullvalue.test/");
@@ -562,7 +562,7 @@ describe("1Password 1Pux Importer", () => {
     validateCustomField(
       cipher.fields,
       "admin console URL",
-      "https://coolserver.nullvalue.test/admin"
+      "https://coolserver.nullvalue.test/admin",
     );
     validateCustomField(cipher.fields, "admin console username", "frankly-idontknowwhatimdoing");
     validateCustomField(cipher.fields, "console password", "^%RY&^YUiju8iUYHJI(U");
@@ -635,7 +635,7 @@ describe("1Password 1Pux Importer", () => {
 
     expect(cipher.name).toEqual("Secure Note #1");
     expect(cipher.notes).toEqual(
-      "This is my secure note. \n\nLorem ipsum expecto patronum. \nThe quick brown fox jumped over the lazy dog."
+      "This is my secure note. \n\nLorem ipsum expecto patronum. \nThe quick brown fox jumped over the lazy dog.",
     );
     expect(cipher.secureNote.type).toEqual(SecureNoteType.Generic);
   });
