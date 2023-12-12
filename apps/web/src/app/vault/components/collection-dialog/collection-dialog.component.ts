@@ -75,6 +75,11 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
     false,
   );
 
+  protected flexibleCollectionsV1Enabled$ = this.configService.getFeatureFlag$(
+    FeatureFlag.FlexibleCollectionsV1,
+    false,
+  );
+
   private destroy$ = new Subject<void>();
   protected organizations$: Observable<Organization[]>;
 
@@ -159,6 +164,7 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       groups: groups$,
       users: this.organizationUserService.getAllUsers(orgId),
       flexibleCollections: this.flexibleCollectionsEnabled$,
+      flexibleCollectionsV1: this.flexibleCollectionsV1Enabled$,
       allowAdminAccessToAllCollectionItems: this.organizationApiService
         .get(orgId)
         .then((orgResponse) => orgResponse.allowAdminAccessToAllCollectionItems),
@@ -172,6 +178,7 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
           groups,
           users,
           flexibleCollections,
+          flexibleCollectionsV1,
           allowAdminAccessToAllCollectionItems,
         }) => {
           this.organization = organization;
@@ -230,7 +237,7 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
           }
 
           this.allowAdminAccessToAllCollectionItems = allowAdminAccessToAllCollectionItems;
-          if (flexibleCollections && !allowAdminAccessToAllCollectionItems) {
+          if (flexibleCollectionsV1 && !allowAdminAccessToAllCollectionItems) {
             this.formGroup.controls.access.addValidators(validateCanManagePermission);
           } else {
             this.formGroup.controls.access.removeValidators(validateCanManagePermission);
