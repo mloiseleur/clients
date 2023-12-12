@@ -221,7 +221,7 @@ export class OnePassword1PuxImporter extends BaseImporter implements Importer {
         return;
       }
 
-      const fieldName = this.getFieldName(field.id, field.title, sectionTitle);
+      const fieldName = this.getFieldName(field.title, sectionTitle);
       const fieldValue = this.extractValue(field.value, valueKey);
 
       if (cipher.type === CipherType.Login) {
@@ -343,12 +343,18 @@ export class OnePassword1PuxImporter extends BaseImporter implements Importer {
     });
   }
 
-  private getFieldName(id: string, title: string, sectionTitle?: string): string {
-    return !this.isNullOrWhitespace(title)
-      ? title
-      : !this.isNullOrWhitespace(sectionTitle)
-        ? sectionTitle
-        : "";
+  // Use the title if available. If not use the sectionTitle if available.
+  // Default to an empty string in all other cases.
+  private getFieldName(title: string, sectionTitle?: string): string {
+    if (!this.isNullOrWhitespace(title)) {
+      return title;
+    }
+
+    if (!this.isNullOrWhitespace(sectionTitle)) {
+      return sectionTitle;
+    }
+
+    return "";
   }
 
   private extractValue(value: Value, valueKey: string): string {
@@ -364,7 +370,7 @@ export class OnePassword1PuxImporter extends BaseImporter implements Importer {
   }
 
   private fillLogin(field: FieldsEntity, fieldValue: string, cipher: CipherView): boolean {
-    const fieldName = this.getFieldName(field.id, field.title);
+    const fieldName = this.getFieldName(field.title);
 
     if (this.isNullOrWhitespace(cipher.login.username) && fieldName === "username") {
       cipher.login.username = fieldValue;
@@ -389,7 +395,7 @@ export class OnePassword1PuxImporter extends BaseImporter implements Importer {
   }
 
   private fillApiCredentials(field: FieldsEntity, fieldValue: string, cipher: CipherView): boolean {
-    const fieldName = this.getFieldName(field.id, field.title);
+    const fieldName = this.getFieldName(field.title);
 
     if (this.isNullOrWhitespace(cipher.login.password) && fieldName === "credential") {
       cipher.login.password = fieldValue;

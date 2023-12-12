@@ -40,16 +40,12 @@ function validateCustomField(fields: FieldView[], fieldName: string, expectedVal
 function validateDuplicateCustomField(
   fields: FieldView[],
   fieldName: string,
-  expectedValues: any[],
+  expectedValues: string[],
 ) {
   expect(fields).toBeDefined();
-  const customFieldValues = fields
-    .filter((f) => f.name === fieldName)
-    .map((v) => v.value)
-    .sort()
-    .toString();
+  const customFieldValues = fields.filter((f) => f.name === fieldName).map((v) => v.value);
 
-  expect(customFieldValues).toEqual(expectedValues.sort().toString());
+  expect(customFieldValues).toEqual(expectedValues);
 }
 
 describe("1Password 1Pux Importer", () => {
