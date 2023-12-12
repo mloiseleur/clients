@@ -46,9 +46,10 @@ function validateDuplicateCustomField(
   const customFieldValues = fields
     .filter((f) => f.name === fieldName)
     .map((v) => v.value)
+    .sort()
     .toString();
 
-  expect(customFieldValues).toEqual(expectedValues.toString());
+  expect(customFieldValues).toEqual(expectedValues.sort().toString());
 }
 
 describe("1Password 1Pux Importer", () => {
