@@ -122,10 +122,15 @@ export class OrganizationUserResetPasswordService {
   /**
    * Returns existing account recovery keys re-encrypted with the new user key.
    * @param newUserKey the new user key
+   * @throws Error if new user key is null
    */
   async getRotatedKeys(
     newUserKey: UserKey,
   ): Promise<OrganizationUserResetPasswordWithIdRequest[] | null> {
+    if (newUserKey == null) {
+      throw new Error("New user key is required for rotation.");
+    }
+
     const allOrgs = await this.organizationService.getAll();
 
     if (!allOrgs) {

@@ -214,6 +214,10 @@ export class SendService implements InternalSendServiceAbstraction {
   }
 
   async getRotatedKeys(newUserKey: UserKey): Promise<SendWithIdRequest[]> {
+    if (newUserKey == null) {
+      throw new Error("New user key is required for rotation.");
+    }
+
     return await Promise.all(
       this._sends.value.map(async (send) => {
         const sendKey = await this.cryptoService.decryptToBytes(send.key);
