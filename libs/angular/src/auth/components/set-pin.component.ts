@@ -5,7 +5,7 @@ import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.se
 import { StateService } from "@bitwarden/common/platform/abstractions/state.service";
 import { Utils } from "@bitwarden/common/platform/misc/utils";
 
-import { ModalRef } from "../../components/modal/modal.ref";
+// import { ModalRef } from "../../components/modal/modal.ref";
 
 @Directive()
 export class SetPinComponent implements OnInit {
@@ -15,7 +15,7 @@ export class SetPinComponent implements OnInit {
   showMasterPassOnRestart = true;
 
   constructor(
-    private modalRef: ModalRef,
+    // private modalRef: ModalRef,
     private cryptoService: CryptoService,
     private userVerificationService: UserVerificationService,
     private stateService: StateService,
@@ -32,7 +32,7 @@ export class SetPinComponent implements OnInit {
 
   async submit() {
     if (Utils.isNullOrWhitespace(this.pin)) {
-      this.modalRef.close(false);
+      // this.modalRef.close(false);
       return;
     }
 
@@ -52,6 +52,6 @@ export class SetPinComponent implements OnInit {
       await this.stateService.setPinKeyEncryptedUserKey(pinProtectedKey);
     }
 
-    this.modalRef.close(true);
+    // this.modalRef.close(true);
   }
 }
