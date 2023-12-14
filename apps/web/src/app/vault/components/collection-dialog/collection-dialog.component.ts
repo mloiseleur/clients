@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from "@angula
 import { AbstractControl, FormBuilder, Validators } from "@angular/forms";
 import {
   combineLatest,
+  firstValueFrom,
   from,
   map,
   Observable,
@@ -140,6 +141,10 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       this.formGroup.patchValue({ selectedOrg: this.params.organizationId });
       await this.loadOrg(this.params.organizationId, this.params.collectionIds);
     }
+
+    if (await firstValueFrom(this.flexibleCollectionsV1Enabled$)) {
+      this.formGroup.controls.access.addValidators(validateCanManagePermission);
+    }
   }
 
   async loadOrg(orgId: string, collectionIds: string[]) {
@@ -164,7 +169,6 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
       groups: groups$,
       users: this.organizationUserService.getAllUsers(orgId),
       flexibleCollections: this.flexibleCollectionsEnabled$,
-      flexibleCollectionsV1: this.flexibleCollectionsV1Enabled$,
       allowAdminAccessToAllCollectionItems: this.organizationApiService
         .get(orgId)
         .then((orgResponse) => orgResponse.allowAdminAccessToAllCollectionItems),
@@ -178,7 +182,6 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
           groups,
           users,
           flexibleCollections,
-          flexibleCollectionsV1,
           allowAdminAccessToAllCollectionItems,
         }) => {
           this.organization = organization;
@@ -186,6 +189,8 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
             groups.map(mapGroupToAccessItemView),
             users.data.map(mapUserToAccessItemView),
           );
+
+          this.allowAdminAccessToAllCollectionItems = allowAdminAccessToAllCollectionItems;
 
           // Force change detection to update the access selector's items
           this.changeDetectorRef.detectChanges();
@@ -235,14 +240,6 @@ export class CollectionDialogComponent implements OnInit, OnDestroy {
               access: initialSelection,
             });
           }
-
-          this.allowAdminAccessToAllCollectionItems = allowAdminAccessToAllCollectionItems;
-          if (flexibleCollectionsV1 && !allowAdminAccessToAllCollectionItems) {
-            this.formGroup.controls.access.addValidators(validateCanManagePermission);
-          } else {
-            this.formGroup.controls.access.removeValidators(validateCanManagePermission);
-          }
-          this.formGroup.controls.access.updateValueAndValidity();
 
           this.loading = false;
         },
