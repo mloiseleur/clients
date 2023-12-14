@@ -316,7 +316,7 @@ export class SettingsComponent implements OnInit {
 
   async updatePin(value: boolean) {
     if (value) {
-      this.dialogService.open(SetPinComponent);
+      SetPinComponent.open(this.dialogService);
 
       // const ref = this.modalService.open(SetPinComponent, { allowMultipleModals: true });
 
