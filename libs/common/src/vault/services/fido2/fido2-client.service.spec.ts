@@ -46,10 +46,14 @@ describe("FidoAuthenticatorService", () => {
 
   describe("isFido2FeatureEnabled", () => {
     [
-      { featureFlag: true, enabledPasskeys: true, expected: true },
-      { featureFlag: true, enabledPasskeys: false, expected: false },
-      { featureFlag: false, enabledPasskeys: true, expected: false },
-      { featureFlag: false, enabledPasskeys: false, expected: false },
+      { featureFlag: true, enabledPasskeys: true, loggedIn: true, expected: true },
+      { featureFlag: true, enabledPasskeys: true, loggedIn: false, expected: false },
+      { featureFlag: true, enabledPasskeys: false, loggedIn: true, expected: false },
+      { featureFlag: true, enabledPasskeys: false, loggedIn: false, expected: false },
+      { featureFlag: false, enabledPasskeys: true, loggedIn: true, expected: false },
+      { featureFlag: false, enabledPasskeys: true, loggedIn: false, expected: false },
+      { featureFlag: false, enabledPasskeys: false, loggedIn: true, expected: false },
+      { featureFlag: false, enabledPasskeys: false, loggedIn: false, expected: false },
     ].forEach(({ featureFlag, enabledPasskeys, expected }) => {
       const featureFlagDescription = featureFlag
         ? "feature flag is enabled"
@@ -57,10 +61,14 @@ describe("FidoAuthenticatorService", () => {
       const userEnabledPasskeysDescription = enabledPasskeys
         ? "user has enabled passkeys"
         : "user has disabled passkeys";
+      const loggedInDescription = expected ? "user is logged in" : "user is logged out";
 
-      it(`should return ${expected} when ${featureFlagDescription} and ${userEnabledPasskeysDescription}`, async () => {
+      it(`should return ${expected} when ${featureFlagDescription}, ${userEnabledPasskeysDescription} and ${loggedInDescription}`, async () => {
         configService.getFeatureFlag.mockResolvedValue(featureFlag);
         stateService.getEnablePasskeys.mockResolvedValue(enabledPasskeys);
+        authService.getAuthStatus.mockResolvedValue(
+          expected ? AuthenticationStatus.Unlocked : AuthenticationStatus.LoggedOut
+        );
 
         const result = await client.isFido2FeatureEnabled();
 
