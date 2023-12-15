@@ -44,37 +44,6 @@ describe("FidoAuthenticatorService", () => {
     tab = { id: 123, windowId: 456 } as chrome.tabs.Tab;
   });
 
-  describe("isFido2FeatureEnabled", () => {
-    cartesian(
-      [true, false],
-      [true, false],
-      [AuthenticationStatus.Locked, AuthenticationStatus.Unlocked, AuthenticationStatus.LoggedOut]
-    ).forEach(([featureFlag, enabledPasskeys, authStatus]) => {
-      const featureFlagDescription = featureFlag
-        ? "feature flag is enabled"
-        : "feature flag is disabled";
-      const userEnabledPasskeysDescription = enabledPasskeys
-        ? "user has enabled passkeys"
-        : "user has disabled passkeys";
-      const loggedInDescription = `user account is ${AuthenticationStatus[authStatus]}`;
-
-      const expected =
-        featureFlag && enabledPasskeys && authStatus !== AuthenticationStatus.LoggedOut;
-
-      it(`should return ${expected} when ${featureFlagDescription}, ${userEnabledPasskeysDescription} and ${loggedInDescription}`, async () => {
-        configService.getFeatureFlag.mockResolvedValue(featureFlag);
-        stateService.getEnablePasskeys.mockResolvedValue(enabledPasskeys);
-        authService.getAuthStatus.mockResolvedValue(
-          expected ? AuthenticationStatus.Unlocked : AuthenticationStatus.LoggedOut
-        );
-
-        const result = await client.isFido2FeatureEnabled();
-
-        expect(result).toBe(expected);
-      });
-    });
-  });
-
   describe("createCredential", () => {
     describe("input parameters validation", () => {
       // Spec: If sameOriginWithAncestors is false, return a "NotAllowedError" DOMException.
@@ -542,12 +511,3 @@ describe("FidoAuthenticatorService", () => {
 function randomBytes(length: number) {
   return new Uint8Array(Array.from({ length }, (_, k) => k % 255));
 }
-
-/** Generate all combinations of the input arrays */
-function cartesian<T extends any[][]>(...arr: T): MapCartesian<T>[] {
-  return arr.reduce((a, b) => a.flatMap((c) => b.map((d) => [...c, d])), [[]]) as MapCartesian<T>[];
-}
-
-type MapCartesian<T extends any[][]> = {
-  [P in keyof T]: T[P] extends Array<infer U> ? U : never;
-};
