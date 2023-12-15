@@ -44,6 +44,31 @@ describe("FidoAuthenticatorService", () => {
     tab = { id: 123, windowId: 456 } as chrome.tabs.Tab;
   });
 
+  describe("isFido2FeatureEnabled", () => {
+    [
+      { featureFlag: true, enabledPasskeys: true, expected: true },
+      { featureFlag: true, enabledPasskeys: false, expected: false },
+      { featureFlag: false, enabledPasskeys: true, expected: false },
+      { featureFlag: false, enabledPasskeys: false, expected: false },
+    ].forEach(({ featureFlag, enabledPasskeys, expected }) => {
+      const featureFlagDescription = featureFlag
+        ? "feature flag is enabled"
+        : "feature flag is disabled";
+      const userEnabledPasskeysDescription = enabledPasskeys
+        ? "user has enabled passkeys"
+        : "user has disabled passkeys";
+
+      it(`should return ${expected} when ${featureFlagDescription} and ${userEnabledPasskeysDescription}`, async () => {
+        configService.getFeatureFlag.mockResolvedValue(featureFlag);
+        stateService.getEnablePasskeys.mockResolvedValue(enabledPasskeys);
+
+        const result = await client.isFido2FeatureEnabled();
+
+        expect(result).toBe(expected);
+      });
+    });
+  });
+
   describe("createCredential", () => {
     describe("input parameters validation", () => {
       // Spec: If sameOriginWithAncestors is false, return a "NotAllowedError" DOMException.
@@ -190,7 +215,7 @@ describe("FidoAuthenticatorService", () => {
             }),
           }),
           tab,
-          expect.anything(),
+          expect.anything()
         );
       });
 
@@ -198,7 +223,7 @@ describe("FidoAuthenticatorService", () => {
       it("should throw error if authenticator throws InvalidState", async () => {
         const params = createParams();
         authenticator.makeCredential.mockRejectedValue(
-          new Fido2AuthenticatorError(Fido2AuthenticatorErrorCode.InvalidState),
+          new Fido2AuthenticatorError(Fido2AuthenticatorErrorCode.InvalidState)
         );
 
         const result = async () => await client.createCredential(params, tab);
@@ -369,7 +394,7 @@ describe("FidoAuthenticatorService", () => {
       it("should throw error if authenticator throws InvalidState", async () => {
         const params = createParams();
         authenticator.getAssertion.mockRejectedValue(
-          new Fido2AuthenticatorError(Fido2AuthenticatorErrorCode.InvalidState),
+          new Fido2AuthenticatorError(Fido2AuthenticatorErrorCode.InvalidState)
         );
 
         const result = async () => await client.assertCredential(params, tab);
@@ -454,7 +479,7 @@ describe("FidoAuthenticatorService", () => {
             ],
           }),
           tab,
-          expect.anything(),
+          expect.anything()
         );
       });
     });
@@ -476,7 +501,7 @@ describe("FidoAuthenticatorService", () => {
             allowCredentialDescriptorList: [],
           }),
           tab,
-          expect.anything(),
+          expect.anything()
         );
       });
     });
