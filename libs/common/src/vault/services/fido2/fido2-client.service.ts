@@ -1,3 +1,4 @@
+import { firstValueFrom } from "rxjs";
 import { parse } from "tldts";
 
 import { AuthService } from "../../../auth/abstractions/auth.service";
@@ -45,18 +46,27 @@ export class Fido2ClientService implements Fido2ClientServiceAbstraction {
     private logService?: LogService
   ) {}
 
-  async isFido2FeatureEnabled(hostname: string): Promise<boolean> {
+  async isFido2FeatureEnabled(hostname: string, origin: string): Promise<boolean> {
     const featureFlagEnabled = await this.configService.getFeatureFlag<boolean>(
       FeatureFlag.Fido2VaultCredentials
     );
     const userEnabledPasskeys = await this.stateService.getEnablePasskeys();
-    const userLoggedIn =
+    const isUserLoggedIn =
       (await this.authService.getAuthStatus()) !== AuthenticationStatus.LoggedOut;
 
     const neverDomains = await this.stateService.getNeverDomains();
-    const excludedDomain = neverDomains != null && hostname in neverDomains;
+    const isExcludedDomain = neverDomains != null && hostname in neverDomains;
 
-    return featureFlagEnabled && userEnabledPasskeys && userLoggedIn && !excludedDomain;
+    const serverConfig = await firstValueFrom(this.configService.serverConfig$);
+    const isOriginEqualBitwardenVault = origin === serverConfig.environment?.vault;
+
+    return (
+      featureFlagEnabled &&
+      userEnabledPasskeys &&
+      isUserLoggedIn &&
+      !isExcludedDomain &&
+      !isOriginEqualBitwardenVault
+    );
   }
 
   async createCredential(
@@ -65,7 +75,10 @@ export class Fido2ClientService implements Fido2ClientServiceAbstraction {
     abortController = new AbortController()
   ): Promise<CreateCredentialResult> {
     const parsedOrigin = parse(params.origin, { allowPrivateDomains: true });
-    const enableFido2VaultCredentials = await this.isFido2FeatureEnabled(parsedOrigin.hostname);
+    const enableFido2VaultCredentials = await this.isFido2FeatureEnabled(
+      parsedOrigin.hostname,
+      params.origin
+    );
 
     if (!enableFido2VaultCredentials) {
       this.logService?.warning(`[Fido2Client] Fido2VaultCredential is not enabled`);
@@ -203,7 +216,10 @@ export class Fido2ClientService implements Fido2ClientServiceAbstraction {
     abortController = new AbortController()
   ): Promise<AssertCredentialResult> {
     const parsedOrigin = parse(params.origin, { allowPrivateDomains: true });
-    const enableFido2VaultCredentials = await this.isFido2FeatureEnabled(parsedOrigin.hostname);
+    const enableFido2VaultCredentials = await this.isFido2FeatureEnabled(
+      parsedOrigin.hostname,
+      params.origin
+    );
 
     if (!enableFido2VaultCredentials) {
       this.logService?.warning(`[Fido2Client] Fido2VaultCredential is not enabled`);
