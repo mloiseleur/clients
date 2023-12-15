@@ -9,8 +9,12 @@ import { Messenger } from "./messaging/messenger";
 function isFido2FeatureEnabled(): Promise<boolean> {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage(
-      { command: "checkFido2FeatureEnabled" },
-      (response: { result?: boolean }) => resolve(response.result),
+      {
+        command: "checkFido2FeatureEnabled",
+        hostname: window.location.hostname,
+        origin: window.location.origin,
+      },
+      (response: { result?: boolean }) => resolve(response.result)
     );
   });
 }
@@ -116,7 +120,7 @@ function initializeFido2ContentScript() {
               type: MessageType.CredentialCreationResponse,
               result: response.result,
             });
-          },
+          }
         );
       });
     }
@@ -144,10 +148,10 @@ function initializeFido2ContentScript() {
               type: MessageType.CredentialGetResponse,
               result: response.result,
             });
-          },
+          }
         );
       }).finally(() =>
-        abortController.signal.removeEventListener("abort", abortHandler),
+        abortController.signal.removeEventListener("abort", abortHandler)
       ) as Promise<Message>;
     }
 
