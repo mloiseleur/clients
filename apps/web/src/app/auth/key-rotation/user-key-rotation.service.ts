@@ -18,13 +18,13 @@ import { FolderWithIdRequest } from "@bitwarden/common/vault/models/request/fold
 import { OrganizationUserResetPasswordService } from "../../admin-console/organizations/members/services/organization-user-reset-password/organization-user-reset-password.service";
 import { EmergencyAccessService } from "../emergency-access";
 
-import { KeyRotationApiService } from "./key-rotation-api.service";
 import { UpdateKeyRequest } from "./request/update-key.request";
+import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
 
 @Injectable()
-export class KeyRotationService {
+export class UserKeyRotationService {
   constructor(
-    private apiService: KeyRotationApiService,
+    private apiService: UserKeyRotationApiService,
     private cipherService: CipherService,
     private folderService: FolderService,
     private sendService: SendService,
@@ -37,6 +37,10 @@ export class KeyRotationService {
     private configService: ConfigServiceAbstraction,
   ) {}
 
+  /**
+   * Creates a new user key and re-encrypts all required data with the it.
+   * @param masterPassword current master password (used for validation)
+   */
   async rotateUserKeyAndEncryptedData(masterPassword: string): Promise<void> {
     if (!masterPassword) {
       throw new Error("Invalid master password");
@@ -81,7 +85,7 @@ export class KeyRotationService {
     request.resetPasswordKeys = await this.resetPasswordService.getRotatedKeys(newUserKey);
 
     if (await this.configService.getFeatureFlag<boolean>(FeatureFlag.KeyRotationImprovements)) {
-      await this.apiService.postAccountKey(request);
+      await this.apiService.postUserKeyUpdate(request);
     } else {
       await this.rotateUserKeyAndEncryptedDataLegacy(request);
     }
@@ -127,7 +131,7 @@ export class KeyRotationService {
 
   private async rotateUserKeyAndEncryptedDataLegacy(request: UpdateKeyRequest): Promise<void> {
     // Update keys, ciphers, folders, and sends
-    await this.apiService.postAccountKey(request);
+    await this.apiService.postUserKeyUpdate(request);
 
     // Update emergency access keys
     await this.emergencyAccessService.postLegacyRotation(request.emergencyAccessKeys);

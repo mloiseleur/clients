@@ -22,7 +22,7 @@ import { CipherService } from "@bitwarden/common/vault/abstractions/cipher.servi
 import { SyncService } from "@bitwarden/common/vault/abstractions/sync/sync.service.abstraction";
 import { DialogService } from "@bitwarden/components";
 
-import { KeyRotationService } from "../key-rotation/key-rotation.service";
+import { UserKeyRotationService } from "../key-rotation/user-key-rotation.service";
 
 @Component({
   selector: "app-change-password",
@@ -53,7 +53,7 @@ export class ChangePasswordComponent extends BaseChangePasswordComponent {
     dialogService: DialogService,
     private userVerificationService: UserVerificationService,
     private configService: ConfigServiceAbstraction,
-    private keyRotationService: KeyRotationService,
+    private keyRotationService: UserKeyRotationService,
   ) {
     super(
       i18nService,

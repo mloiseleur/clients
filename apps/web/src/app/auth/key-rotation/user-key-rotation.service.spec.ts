@@ -25,13 +25,13 @@ import { OrganizationUserResetPasswordService } from "../../admin-console/organi
 import { StateService } from "../../core";
 import { EmergencyAccessService } from "../emergency-access";
 
-import { KeyRotationApiService } from "./key-rotation-api.service";
-import { KeyRotationService } from "./key-rotation.service";
+import { UserKeyRotationApiService } from "./user-key-rotation-api.service";
+import { UserKeyRotationService } from "./user-key-rotation.service";
 
 describe("KeyRotationService", () => {
-  let keyRotationService: KeyRotationService;
+  let keyRotationService: UserKeyRotationService;
 
-  let mockApiService: MockProxy<KeyRotationApiService>;
+  let mockApiService: MockProxy<UserKeyRotationApiService>;
   let mockCipherService: MockProxy<CipherService>;
   let mockFolderService: MockProxy<FolderService>;
   let mockSendService: MockProxy<SendService>;
@@ -44,7 +44,7 @@ describe("KeyRotationService", () => {
   let mockConfigService: MockProxy<ConfigServiceAbstraction>;
 
   beforeAll(() => {
-    mockApiService = mock<KeyRotationApiService>();
+    mockApiService = mock<UserKeyRotationApiService>();
     mockCipherService = mock<CipherService>();
     mockFolderService = mock<FolderService>();
     mockSendService = mock<SendService>();
@@ -56,7 +56,7 @@ describe("KeyRotationService", () => {
     mockStateService = mock<StateService>();
     mockConfigService = mock<ConfigServiceAbstraction>();
 
-    keyRotationService = new KeyRotationService(
+    keyRotationService = new UserKeyRotationService(
       mockApiService,
       mockCipherService,
       mockFolderService,
@@ -137,6 +137,15 @@ describe("KeyRotationService", () => {
       });
     });
 
+    it("rotates the user key and encrypted data", async () => {
+      await keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword");
+
+      expect(mockApiService.postUserKeyUpdate).toHaveBeenCalled();
+      const arg = mockApiService.postUserKeyUpdate.mock.calls[0][0];
+      expect(arg.ciphers.length).toBe(2);
+      expect(arg.folders.length).toBe(2);
+    });
+
     it("throws if master password provided is falsey", async () => {
       await expect(keyRotationService.rotateUserKeyAndEncryptedData("")).rejects.toThrow();
     });
@@ -168,13 +177,13 @@ describe("KeyRotationService", () => {
 
       await keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword");
 
-      expect(mockApiService.postAccountKey).toHaveBeenCalled();
+      expect(mockApiService.postUserKeyUpdate).toHaveBeenCalled();
       expect(mockEmergencyAccessService.postLegacyRotation).toHaveBeenCalled();
       expect(mockResetPasswordService.postLegacyRotation).toHaveBeenCalled();
     });
 
     it("throws if server rotation fails", async () => {
-      mockApiService.postAccountKey.mockRejectedValueOnce(new Error("mockError"));
+      mockApiService.postUserKeyUpdate.mockRejectedValueOnce(new Error("mockError"));
 
       await expect(
         keyRotationService.rotateUserKeyAndEncryptedData("mockMasterPassword"),

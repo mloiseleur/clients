@@ -8,14 +8,14 @@ import { MessagingService } from "@bitwarden/common/platform/abstractions/messag
 import { PlatformUtilsService } from "@bitwarden/common/platform/abstractions/platform-utils.service";
 
 import { SharedModule } from "../../shared";
-import { KeyRotationModule } from "../key-rotation/key-rotation.module";
-import { KeyRotationService } from "../key-rotation/key-rotation.service";
+import { UserKeyRotationModule } from "../key-rotation/user-key-rotation.module";
+import { UserKeyRotationService } from "../key-rotation/user-key-rotation.service";
 
 // The master key was originally used to encrypt user data, before the user key was introduced.
 // This component is used to migrate from the old encryption scheme to the new one.
 @Component({
   standalone: true,
-  imports: [SharedModule, KeyRotationModule],
+  imports: [SharedModule, UserKeyRotationModule],
   templateUrl: "migrate-legacy-encryption.component.html",
 })
 export class MigrateFromLegacyEncryptionComponent {
@@ -24,7 +24,7 @@ export class MigrateFromLegacyEncryptionComponent {
   });
 
   constructor(
-    private keyRotationService: KeyRotationService,
+    private keyRotationService: UserKeyRotationService,
     private i18nService: I18nService,
     private platformUtilsService: PlatformUtilsService,
     private cryptoService: CryptoService,

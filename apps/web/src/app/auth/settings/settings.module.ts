@@ -4,7 +4,7 @@ import { PasswordCalloutComponent } from "@bitwarden/auth";
 
 import { SharedModule } from "../../shared";
 import { EmergencyAccessModule } from "../emergency-access";
-import { KeyRotationModule } from "../key-rotation/key-rotation.module";
+import { UserKeyRotationModule } from "../key-rotation/user-key-rotation.module";
 
 import { ChangePasswordComponent } from "./change-password.component";
 import { WebauthnLoginSettingsModule } from "./webauthn-login-settings";
@@ -15,7 +15,7 @@ import { WebauthnLoginSettingsModule } from "./webauthn-login-settings";
     WebauthnLoginSettingsModule,
     EmergencyAccessModule,
     PasswordCalloutComponent,
-    KeyRotationModule,
+    UserKeyRotationModule,
   ],
   declarations: [ChangePasswordComponent],
   providers: [],
