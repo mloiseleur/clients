@@ -148,6 +148,18 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
       if (this.product === ProductType.Enterprise || this.product === ProductType.Teams) {
         this.formGroup.controls.businessOwned.setValue(true);
       }
+
+      if (this.currentPlan && this.currentPlan.product !== ProductType.Enterprise) {
+        const upgradedPlan = this.passwordManagerPlans.find((plan) =>
+          this.currentPlan.product === ProductType.Free
+            ? plan.type === PlanType.FamiliesAnnually
+            : plan.upgradeSortOrder == this.currentPlan.upgradeSortOrder + 1,
+        );
+
+        this.plan = upgradedPlan.type;
+        this.product = upgradedPlan.product;
+        this.formGroup.controls.additionalSeats.setValue(11);
+      }
     }
 
     if (this.hasProvider) {
