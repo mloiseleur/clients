@@ -58,12 +58,12 @@ export class Fido2ClientService implements Fido2ClientServiceAbstraction {
     const isOriginEqualBitwardenVault = origin === serverConfig.environment?.vault;
 
     if (
-      !userEnabledPasskeys &&
-      !isUserLoggedIn &&
-      isExcludedDomain &&
+      !userEnabledPasskeys ||
+      !isUserLoggedIn ||
+      isExcludedDomain ||
       isOriginEqualBitwardenVault
     ) {
-      return;
+      return false;
     }
 
     const featureFlagEnabled = await this.configService.getFeatureFlag<boolean>(

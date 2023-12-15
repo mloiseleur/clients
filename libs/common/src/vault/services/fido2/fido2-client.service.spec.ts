@@ -45,6 +45,7 @@ describe("FidoAuthenticatorService", () => {
     configService.getFeatureFlag.mockResolvedValue(true);
     configService.serverConfig$ = of({ environment: { vault: VaultUrl } } as any);
     stateService.getEnablePasskeys.mockResolvedValue(true);
+    authService.getAuthStatus.mockResolvedValue(AuthenticationStatus.Unlocked);
     tab = { id: 123, windowId: 456 } as chrome.tabs.Tab;
   });
 
