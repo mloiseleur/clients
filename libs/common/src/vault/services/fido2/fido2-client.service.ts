@@ -47,9 +47,6 @@ export class Fido2ClientService implements Fido2ClientServiceAbstraction {
   ) {}
 
   async isFido2FeatureEnabled(hostname: string, origin: string): Promise<boolean> {
-    const featureFlagEnabled = await this.configService.getFeatureFlag<boolean>(
-      FeatureFlag.Fido2VaultCredentials
-    );
     const userEnabledPasskeys = await this.stateService.getEnablePasskeys();
     const isUserLoggedIn =
       (await this.authService.getAuthStatus()) !== AuthenticationStatus.LoggedOut;
@@ -60,13 +57,20 @@ export class Fido2ClientService implements Fido2ClientServiceAbstraction {
     const serverConfig = await firstValueFrom(this.configService.serverConfig$);
     const isOriginEqualBitwardenVault = origin === serverConfig.environment?.vault;
 
-    return (
-      featureFlagEnabled &&
-      userEnabledPasskeys &&
-      isUserLoggedIn &&
-      !isExcludedDomain &&
-      !isOriginEqualBitwardenVault
+    if (
+      !userEnabledPasskeys &&
+      !isUserLoggedIn &&
+      isExcludedDomain &&
+      isOriginEqualBitwardenVault
+    ) {
+      return;
+    }
+
+    const featureFlagEnabled = await this.configService.getFeatureFlag<boolean>(
+      FeatureFlag.Fido2VaultCredentials
     );
+
+    return featureFlagEnabled;
   }
 
   async createCredential(
