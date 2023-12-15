@@ -45,23 +45,21 @@ describe("FidoAuthenticatorService", () => {
   });
 
   describe("isFido2FeatureEnabled", () => {
-    [
-      { featureFlag: true, enabledPasskeys: true, loggedIn: true, expected: true },
-      { featureFlag: true, enabledPasskeys: true, loggedIn: false, expected: false },
-      { featureFlag: true, enabledPasskeys: false, loggedIn: true, expected: false },
-      { featureFlag: true, enabledPasskeys: false, loggedIn: false, expected: false },
-      { featureFlag: false, enabledPasskeys: true, loggedIn: true, expected: false },
-      { featureFlag: false, enabledPasskeys: true, loggedIn: false, expected: false },
-      { featureFlag: false, enabledPasskeys: false, loggedIn: true, expected: false },
-      { featureFlag: false, enabledPasskeys: false, loggedIn: false, expected: false },
-    ].forEach(({ featureFlag, enabledPasskeys, expected }) => {
+    cartesian(
+      [true, false],
+      [true, false],
+      [AuthenticationStatus.Locked, AuthenticationStatus.Unlocked, AuthenticationStatus.LoggedOut]
+    ).forEach(([featureFlag, enabledPasskeys, authStatus]) => {
       const featureFlagDescription = featureFlag
         ? "feature flag is enabled"
         : "feature flag is disabled";
       const userEnabledPasskeysDescription = enabledPasskeys
         ? "user has enabled passkeys"
         : "user has disabled passkeys";
-      const loggedInDescription = expected ? "user is logged in" : "user is logged out";
+      const loggedInDescription = `user account is ${AuthenticationStatus[authStatus]}`;
+
+      const expected =
+        featureFlag && enabledPasskeys && authStatus !== AuthenticationStatus.LoggedOut;
 
       it(`should return ${expected} when ${featureFlagDescription}, ${userEnabledPasskeysDescription} and ${loggedInDescription}`, async () => {
         configService.getFeatureFlag.mockResolvedValue(featureFlag);
@@ -544,3 +542,12 @@ describe("FidoAuthenticatorService", () => {
 function randomBytes(length: number) {
   return new Uint8Array(Array.from({ length }, (_, k) => k % 255));
 }
+
+/** Generate all combinations of the input arrays */
+function cartesian<T extends any[][]>(...arr: T): MapCartesian<T>[] {
+  return arr.reduce((a, b) => a.flatMap((c) => b.map((d) => [...c, d])), [[]]) as MapCartesian<T>[];
+}
+
+type MapCartesian<T extends any[][]> = {
+  [P in keyof T]: T[P] extends Array<infer U> ? U : never;
+};
