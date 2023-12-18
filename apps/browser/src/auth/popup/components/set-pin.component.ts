@@ -10,6 +10,8 @@ import {
   ButtonModule,
   DialogModule,
   DialogService,
+  FormFieldModule,
+  IconButtonModule,
 } from "@bitwarden/components";
 
 @Component({
@@ -20,8 +22,10 @@ import {
     CommonModule,
     JslibModule,
     ButtonModule,
+    IconButtonModule,
     ReactiveFormsModule,
     AsyncActionsModule,
+    FormFieldModule,
   ],
 })
 export class SetPinComponent extends BaseSetPinComponent {
