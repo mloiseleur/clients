@@ -317,15 +317,6 @@ export class SettingsComponent implements OnInit {
   async updatePin(value: boolean) {
     if (value) {
       SetPinComponent.open(this.dialogService);
-
-      // const ref = this.modalService.open(SetPinComponent, { allowMultipleModals: true });
-
-      // if (ref == null) {
-      //   this.form.controls.pin.setValue(false, { emitEvent: false });
-      //   return;
-      // }
-
-      // this.form.controls.pin.setValue(await ref.onClosedPromise(), { emitEvent: false });
     } else {
       await this.vaultTimeoutSettingsService.clear();
     }
