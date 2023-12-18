@@ -1,8 +1,25 @@
-<bit-dialog>
+<form [bitSubmit]="submit" [formGroup]="setPinForm">
+  <bit-dialog>
+    <div bitDialogContent>
+      <p>
+        {{ "setYourPinCode" | i18n }}
+      </p>
+    </div>
+    <div bitDialogFooter>
+      <button type="submit" bitButton bitFormButton>
+        <span>{{ "ok" | i18n }}</span>
+      </button>
+      <button type="button" bitButton bitFormButton buttonType="secondary" bitDialogClose>
+        {{ "cancel" | i18n }}
+      </button>
+    </div>
+  </bit-dialog>
+</form>
+
+<!-- <bit-dialog>
   <div bitDialogTitle>Example Title</div>
   <div bitDialogContent>
-    Lorem ipsum dolor sit amet.
-    <!-- <form class="modal-content" #form (ngSubmit)="submit()">
+    <form class="modal-content" #form (ngSubmit)="submit()">
       <div class="modal-body">
         <div>
           {{ "setYourPinCode" | i18n }}
@@ -61,6 +78,6 @@
           {{ "cancel" | i18n }}
         </button>
       </div>
-    </form> -->
+    </form>
   </div>
-</bit-dialog>
+</bit-dialog> -->

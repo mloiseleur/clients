@@ -5,12 +5,24 @@ import { ReactiveFormsModule } from "@angular/forms";
 
 import { SetPinComponent as BaseSetPinComponent } from "@bitwarden/angular/auth/components/set-pin.component";
 import { JslibModule } from "@bitwarden/angular/jslib.module";
-import { ButtonModule, DialogModule, DialogService } from "@bitwarden/components";
+import {
+  AsyncActionsModule,
+  ButtonModule,
+  DialogModule,
+  DialogService,
+} from "@bitwarden/components";
 
 @Component({
   standalone: true,
   templateUrl: "set-pin.component.html",
-  imports: [DialogModule, CommonModule, JslibModule, ButtonModule, ReactiveFormsModule],
+  imports: [
+    DialogModule,
+    CommonModule,
+    JslibModule,
+    ButtonModule,
+    ReactiveFormsModule,
+    AsyncActionsModule,
+  ],
 })
 export class SetPinComponent extends BaseSetPinComponent {
   static open(dialogService: DialogService): DialogRef<SetPinComponent> {

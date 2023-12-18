@@ -1,4 +1,5 @@
 import { Directive, OnInit } from "@angular/core";
+import { FormBuilder } from "@angular/forms";
 
 import { UserVerificationService } from "@bitwarden/common/auth/abstractions/user-verification/user-verification.service.abstraction";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -14,11 +15,14 @@ export class SetPinComponent implements OnInit {
   masterPassOnRestart = true;
   showMasterPassOnRestart = true;
 
+  setPinForm = this.formBuilder.group({});
+
   constructor(
     // private modalRef: ModalRef,
     private cryptoService: CryptoService,
     private userVerificationService: UserVerificationService,
     private stateService: StateService,
+    private formBuilder: FormBuilder,
   ) {}
 
   async ngOnInit() {
