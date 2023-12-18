@@ -9,11 +9,6 @@ import { Utils } from "@bitwarden/common/platform/misc/utils";
 
 @Directive()
 export class SetPinComponent implements OnInit {
-  // TODO: remove these 3 after desktop is also converted
-  pin = "";
-  showPin = false;
-  masterPassOnRestart = true;
-
   showMasterPassOnRestart = true;
 
   setPinForm = this.formBuilder.group({
@@ -30,13 +25,10 @@ export class SetPinComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    this.showMasterPassOnRestart = this.masterPassOnRestart =
-      await this.userVerificationService.hasMasterPassword();
-  }
-
-  // TODO: remove after desktop is also converted
-  toggleVisibility() {
-    this.showPin = !this.showPin;
+    this.setPinForm.controls.masterPassOnRestart.setValue(
+      await this.userVerificationService.hasMasterPassword(),
+    );
+    this.showMasterPassOnRestart = this.setPinForm.get("masterPassOnRestart").value;
   }
 
   submit = async () => {
