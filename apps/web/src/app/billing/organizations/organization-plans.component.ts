@@ -165,6 +165,12 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
     if (this.hasProvider) {
       this.formGroup.controls.businessOwned.setValue(true);
       this.changedOwnedBusiness();
+      const providerDefaultPlan = this.passwordManagerPlans.find(
+        (plan) => plan.type === PlanType.TeamsAnnually,
+      );
+      this.plan = providerDefaultPlan.type;
+      this.product = providerDefaultPlan.product;
+      this.formGroup.controls.additionalSeats.setValue(1);
     }
 
     if (!this.createOrganization) {
