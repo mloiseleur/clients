@@ -218,13 +218,15 @@ export class SendService implements InternalSendServiceAbstraction {
       throw new Error("New user key is required for rotation.");
     }
 
-    return await Promise.all(
+    const requests = await Promise.all(
       this._sends.value.map(async (send) => {
         const sendKey = await this.cryptoService.decryptToBytes(send.key);
         send.key = await this.cryptoService.encrypt(sendKey, newUserKey);
         return new SendWithIdRequest(send);
       }),
     );
+    // separate return for easier debugging
+    return requests;
   }
 
   private parseFile(send: Send, file: File, key: SymmetricCryptoKey): Promise<EncArrayBuffer> {
