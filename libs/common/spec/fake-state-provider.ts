@@ -1,13 +1,23 @@
+import { Observable } from "rxjs";
+
 import {
   GlobalState,
   GlobalStateProvider,
   KeyDefinition,
   ActiveUserState,
   SingleUserState,
+  DerivedState,
+  DeriveDefinition,
+  DerivedStateProvider,
 } from "../src/platform/state";
 import { UserId } from "../src/types/guid";
 
-import { FakeActiveUserState, FakeGlobalState, FakeSingleUserState } from "./fake-state";
+import {
+  FakeActiveUserState,
+  FakeDerivedState,
+  FakeGlobalState,
+  FakeSingleUserState,
+} from "./fake-state";
 
 export class FakeGlobalStateProvider implements GlobalStateProvider {
   states: Map<string, GlobalState<unknown>> = new Map();
@@ -59,5 +69,22 @@ export class FakeActiveUserStateProvider {
 
   getFake<T>(keyDefinition: KeyDefinition<T>): FakeActiveUserState<T> {
     return this.get(keyDefinition) as FakeActiveUserState<T>;
+  }
+}
+
+export class FakeDerivedStateProvider implements DerivedStateProvider {
+  states: Map<string, DerivedState<unknown>> = new Map();
+  get<TFrom, TTo, TDeps extends Record<string, Type<unknown>>>(
+    parentState$: Observable<TFrom>,
+    deriveDefinition: DeriveDefinition<TFrom, TTo, TDeps>,
+    dependencies: ShapeToInstances<TDeps>,
+  ): DerivedState<TTo> {
+    let result = this.states.get(deriveDefinition.buildCacheKey()) as DerivedState<TTo>;
+
+    if (result == null) {
+      result = new FakeDerivedState<TTo>();
+      this.states.set(deriveDefinition.buildCacheKey(), result);
+    }
+    return result;
   }
 }
