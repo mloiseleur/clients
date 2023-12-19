@@ -316,7 +316,15 @@ export class SettingsComponent implements OnInit {
 
   async updatePin(value: boolean) {
     if (value) {
-      SetPinComponent.open(this.dialogService);
+      const dialogRef = SetPinComponent.open(this.dialogService);
+
+      if (dialogRef == null) {
+        this.form.controls.pin.setValue(false, { emitEvent: false });
+        return;
+      }
+
+      const userHasPinSet = await firstValueFrom(dialogRef.closed);
+      this.form.controls.pin.setValue(userHasPinSet, { emitEvent: false });
     } else {
       await this.vaultTimeoutSettingsService.clear();
     }

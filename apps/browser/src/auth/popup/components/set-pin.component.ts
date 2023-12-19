@@ -1,4 +1,3 @@
-import { DialogRef } from "@angular/cdk/dialog";
 import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
 import { ReactiveFormsModule } from "@angular/forms";
@@ -29,7 +28,7 @@ import {
   ],
 })
 export class SetPinComponent extends BaseSetPinComponent {
-  static open(dialogService: DialogService): DialogRef<SetPinComponent> {
-    return dialogService.open(SetPinComponent);
+  static open(dialogService: DialogService) {
+    return dialogService.open<boolean>(SetPinComponent);
   }
 }

@@ -36,6 +36,7 @@ export class SetPinComponent implements OnInit {
     const masterPassOnRestart = this.setPinForm.get("masterPassOnRestart").value;
 
     if (Utils.isNullOrWhitespace(pin)) {
+      this.dialogRef.close(false);
       return;
     }
 
@@ -57,6 +58,6 @@ export class SetPinComponent implements OnInit {
       await this.stateService.setPinKeyEncryptedUserKey(pinProtectedKey);
     }
 
-    this.dialogRef.close();
+    this.dialogRef.close(true);
   };
 }
