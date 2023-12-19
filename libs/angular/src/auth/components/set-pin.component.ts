@@ -25,10 +25,10 @@ export class SetPinComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    this.setPinForm.controls.masterPassOnRestart.setValue(
-      await this.userVerificationService.hasMasterPassword(),
-    );
-    this.showMasterPassOnRestart = this.setPinForm.get("masterPassOnRestart").value;
+    const hasMasterPassword = await this.userVerificationService.hasMasterPassword();
+
+    this.setPinForm.controls.masterPassOnRestart.setValue(hasMasterPassword);
+    this.showMasterPassOnRestart = hasMasterPassword;
   }
 
   submit = async () => {
