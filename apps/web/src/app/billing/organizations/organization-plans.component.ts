@@ -164,8 +164,6 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
 
       this.plan = upgradedPlan.type;
       this.product = upgradedPlan.product;
-
-      this.changedProduct();
     }
 
     if (this.hasProvider) {
@@ -176,7 +174,6 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
       );
       this.plan = providerDefaultPlan.type;
       this.product = providerDefaultPlan.product;
-      this.formGroup.controls.additionalSeats.setValue(1);
     }
 
     if (!this.createOrganization) {
@@ -193,6 +190,7 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
         this.singleOrgPolicyAppliesToActiveUser = policyAppliesToActiveUser;
       });
 
+    this.changedProduct();
     this.loading = false;
   }
 
