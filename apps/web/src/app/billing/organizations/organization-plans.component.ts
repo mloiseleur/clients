@@ -24,6 +24,7 @@ import { ProviderOrganizationCreateRequest } from "@bitwarden/common/admin-conso
 import { PaymentMethodType, PlanType } from "@bitwarden/common/billing/enums";
 import { PaymentRequest } from "@bitwarden/common/billing/models/request/payment.request";
 import { BillingResponse } from "@bitwarden/common/billing/models/response/billing.response";
+import { OrganizationSubscriptionResponse } from "@bitwarden/common/billing/models/response/organization-subscription.response";
 import { PlanResponse } from "@bitwarden/common/billing/models/response/plan.response";
 import { ProductType } from "@bitwarden/common/enums";
 import { CryptoService } from "@bitwarden/common/platform/abstractions/crypto.service";
@@ -118,6 +119,7 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
   passwordManagerPlans: PlanResponse[];
   secretsManagerPlans: PlanResponse[];
   organization: Organization;
+  sub: OrganizationSubscriptionResponse;
   billing: BillingResponse;
 
   private destroy$ = new Subject<void>();
@@ -143,6 +145,7 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
     if (this.organizationId) {
       this.organization = this.organizationService.get(this.organizationId);
       this.billing = await this.organizationApiService.getBilling(this.organizationId);
+      this.sub = await this.organizationApiService.getSubscription(this.organizationId);
     }
 
     if (!this.selfHosted) {
@@ -443,6 +446,10 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
 
     if (this.planOffersSecretsManager) {
       this.secretsManagerForm.enable();
+
+      if (this.secretsManagerForm.controls.enabled) {
+        this.secretsManagerForm.controls.userSeats.setValue(this.sub.smSeats || 1);
+      }
     } else {
       this.secretsManagerForm.disable();
     }
