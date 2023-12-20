@@ -140,6 +140,11 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    if (this.organizationId) {
+      this.organization = this.organizationService.get(this.organizationId);
+      this.billing = await this.organizationApiService.getBilling(this.organizationId);
+    }
+
     if (!this.selfHosted) {
       const plans = await this.apiService.getPlans();
       this.passwordManagerPlans = plans.data.filter((plan) => !!plan.PasswordManager);
@@ -148,18 +153,19 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
       if (this.product === ProductType.Enterprise || this.product === ProductType.Teams) {
         this.formGroup.controls.businessOwned.setValue(true);
       }
+    }
 
-      if (this.currentPlan && this.currentPlan.product !== ProductType.Enterprise) {
-        const upgradedPlan = this.passwordManagerPlans.find((plan) =>
-          this.currentPlan.product === ProductType.Free
-            ? plan.type === PlanType.FamiliesAnnually
-            : plan.upgradeSortOrder == this.currentPlan.upgradeSortOrder + 1,
-        );
+    if (this.currentPlan && this.currentPlan.product !== ProductType.Enterprise) {
+      const upgradedPlan = this.passwordManagerPlans.find((plan) =>
+        this.currentPlan.product === ProductType.Free
+          ? plan.type === PlanType.FamiliesAnnually
+          : plan.upgradeSortOrder == this.currentPlan.upgradeSortOrder + 1,
+      );
 
-        this.plan = upgradedPlan.type;
-        this.product = upgradedPlan.product;
-        this.formGroup.controls.additionalSeats.setValue(11);
-      }
+      this.plan = upgradedPlan.type;
+      this.product = upgradedPlan.product;
+
+      this.changedProduct();
     }
 
     if (this.hasProvider) {
@@ -186,11 +192,6 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
       .subscribe((policyAppliesToActiveUser) => {
         this.singleOrgPolicyAppliesToActiveUser = policyAppliesToActiveUser;
       });
-
-    if (this.organizationId) {
-      this.organization = this.organizationService.get(this.organizationId);
-      this.billing = await this.organizationApiService.getBilling(this.organizationId);
-    }
 
     this.loading = false;
   }
@@ -402,13 +403,18 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
   }
 
   changedProduct() {
-    this.formGroup.controls.plan.setValue(this.selectablePlans[0].type);
+    const selectedPlan = this.selectablePlans[0];
+
+    this.formGroup.controls.plan.setValue(selectedPlan.type);
+
     if (!this.selectedPlan.PasswordManager.hasPremiumAccessOption) {
       this.formGroup.controls.premiumAccessAddon.setValue(false);
     }
+
     if (!this.selectedPlan.PasswordManager.hasAdditionalStorageOption) {
       this.formGroup.controls.additionalStorage.setValue(0);
     }
+
     if (!this.selectedPlan.PasswordManager.hasAdditionalSeatsOption) {
       this.formGroup.controls.additionalSeats.setValue(0);
     } else if (
@@ -416,7 +422,25 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
       !this.selectedPlan.PasswordManager.baseSeats &&
       this.selectedPlan.PasswordManager.hasAdditionalSeatsOption
     ) {
-      this.formGroup.controls.additionalSeats.setValue(1);
+      if (
+        this.currentPlan &&
+        !this.currentPlan.PasswordManager.hasAdditionalSeatsOption &&
+        selectedPlan.PasswordManager.hasAdditionalSeatsOption
+      ) {
+        this.formGroup.controls.additionalSeats.setValue(
+          this.currentPlan.PasswordManager.baseSeats,
+        );
+      } else if (
+        this.currentPlan &&
+        this.currentPlan.PasswordManager.hasAdditionalSeatsOption &&
+        selectedPlan.PasswordManager.hasAdditionalSeatsOption
+      ) {
+        this.formGroup.controls.additionalSeats.setValue(this.organization.seats);
+      } else if (selectedPlan.PasswordManager.hasAdditionalSeatsOption) {
+        this.formGroup.controls.additionalSeats.setValue(1);
+      } else {
+        this.formGroup.controls.additionalSeats.setValue(0);
+      }
     }
 
     if (this.planOffersSecretsManager) {
