@@ -410,6 +410,10 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
 
     if (!this.selectedPlan.PasswordManager.hasAdditionalStorageOption) {
       this.formGroup.controls.additionalStorage.setValue(0);
+    } else if (this.currentPlan && this.organization.maxStorageGb) {
+      const currentAdditionalStorage =
+        this.organization.maxStorageGb - this.currentPlan.PasswordManager.baseStorageGb;
+      this.formGroup.controls.additionalStorage.setValue(currentAdditionalStorage);
     }
 
     if (!this.selectedPlan.PasswordManager.hasAdditionalSeatsOption) {
