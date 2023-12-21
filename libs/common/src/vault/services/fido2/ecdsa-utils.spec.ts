@@ -35,8 +35,9 @@ describe("joseToDer", () => {
 
     const result = joseToDer(signature, "ES256");
 
+    // This expected value is wrong, since the 'R' value is negative, '0x00' needs to be prepended to the 'R' value.
     const expected = Fido2Utils.stringToBuffer(
-      "MEQCIPfif6Fs-Y9-q-ixDwf1Tdno6tKioFzM3ctVzxEqpgN3AiBMheRGN5LkMwTD2EmoqIptOXaVoCTDAPQB6vG6V8DZsw",
+      "MEUCIQD34n-hbPmPfqvosQ8H9U3Z6OrSoqBczN3LVc8RKqYDdwIgTIXkRjeS5DMEw9hJqKiKbTl2laAkwwD0AerxulfA2bM",
     );
     expect(result).toEqual(expected);
   });
@@ -49,7 +50,7 @@ describe("joseToDer", () => {
     const result = joseToDer(signature, "ES256");
 
     const expected = Fido2Utils.stringToBuffer(
-      "MEQCIHfif6Fs-Y9-q-ixDwf1Tdno6tKioFzM3ctVzxEqpgN3AiDMheRGN5LkMwTD2EmoqIptOXaVoCTDAPQB6vG6V8DZsw",
+      "MEUCIHfif6Fs-Y9-q-ixDwf1Tdno6tKioFzM3ctVzxEqpgN3AiEAzIXkRjeS5DMEw9hJqKiKbTl2laAkwwD0AerxulfA2bM",
     );
     expect(result).toEqual(expected);
   });
