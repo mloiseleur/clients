@@ -404,51 +404,40 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
 
     this.formGroup.controls.plan.setValue(selectedPlan.type);
 
-    if (!this.selectedPlan.PasswordManager.hasPremiumAccessOption) {
-      this.formGroup.controls.premiumAccessAddon.setValue(false);
-    }
+    // Handle premium access addon
+    this.formGroup.controls.premiumAccessAddon.setValue(
+      !selectedPlan.PasswordManager.hasPremiumAccessOption,
+    );
 
-    if (!this.selectedPlan.PasswordManager.hasAdditionalStorageOption) {
+    // Handle additional storage
+    if (!selectedPlan.PasswordManager.hasAdditionalStorageOption) {
       this.formGroup.controls.additionalStorage.setValue(0);
     } else if (this.currentPlan && this.organization.maxStorageGb) {
-      const currentAdditionalStorage =
-        this.organization.maxStorageGb - this.currentPlan.PasswordManager.baseStorageGb;
-      this.formGroup.controls.additionalStorage.setValue(currentAdditionalStorage);
+      this.formGroup.controls.additionalStorage.setValue(
+        this.organization.maxStorageGb - this.currentPlan.PasswordManager.baseStorageGb,
+      );
     }
 
-    if (!this.selectedPlan.PasswordManager.hasAdditionalSeatsOption) {
+    // Handle additional seats
+    if (!selectedPlan.PasswordManager.hasAdditionalSeatsOption) {
       this.formGroup.controls.additionalSeats.setValue(0);
-    } else if (
-      !this.formGroup.controls.additionalSeats.value &&
-      !this.selectedPlan.PasswordManager.baseSeats &&
-      this.selectedPlan.PasswordManager.hasAdditionalSeatsOption
-    ) {
-      if (
-        this.currentPlan &&
-        !this.currentPlan.PasswordManager.hasAdditionalSeatsOption &&
-        selectedPlan.PasswordManager.hasAdditionalSeatsOption
-      ) {
-        this.formGroup.controls.additionalSeats.setValue(
-          this.currentPlan.PasswordManager.baseSeats,
-        );
-      } else if (
-        this.currentPlan &&
-        this.currentPlan.PasswordManager.hasAdditionalSeatsOption &&
-        selectedPlan.PasswordManager.hasAdditionalSeatsOption
-      ) {
-        this.formGroup.controls.additionalSeats.setValue(this.organization.seats);
-      } else if (selectedPlan.PasswordManager.hasAdditionalSeatsOption) {
-        this.formGroup.controls.additionalSeats.setValue(1);
-      } else {
-        this.formGroup.controls.additionalSeats.setValue(0);
-      }
+    } else {
+      const defaultAdditionalSeats =
+        !this.formGroup.controls.additionalSeats.value && !selectedPlan.PasswordManager.baseSeats
+          ? this.currentPlan?.PasswordManager.baseSeats || 1
+          : this.organization.seats;
+      this.formGroup.controls.additionalSeats.setValue(defaultAdditionalSeats);
     }
 
+    // Handle secrets manager form
     if (this.planOffersSecretsManager) {
       this.secretsManagerForm.enable();
 
       if (this.secretsManagerForm.controls.enabled) {
         this.secretsManagerForm.controls.userSeats.setValue(this.sub.smSeats || 1);
+        this.secretsManagerForm.controls.additionalServiceAccounts.setValue(
+          this.sub.smServiceAccounts - this.currentPlan.SecretsManager.baseServiceAccount || 0,
+        );
       }
     } else {
       this.secretsManagerForm.disable();
