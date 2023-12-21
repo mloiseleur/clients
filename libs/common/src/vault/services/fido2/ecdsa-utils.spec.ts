@@ -35,7 +35,6 @@ describe("joseToDer", () => {
 
     const result = joseToDer(signature, "ES256");
 
-    // This expected value is wrong, since the 'R' value is negative, '0x00' needs to be prepended to the 'R' value.
     const expected = Fido2Utils.stringToBuffer(
       "MEUCIQD34n-hbPmPfqvosQ8H9U3Z6OrSoqBczN3LVc8RKqYDdwIgTIXkRjeS5DMEw9hJqKiKbTl2laAkwwD0AerxulfA2bM",
     );
