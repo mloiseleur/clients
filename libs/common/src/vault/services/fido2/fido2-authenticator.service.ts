@@ -508,7 +508,7 @@ async function generateSignature(params: SignatureParams) {
     ...params.authData,
     ...Fido2Utils.bufferSourceToUint8Array(params.clientDataHash),
   ]);
-  const p1336_signature = new Uint8Array(
+  const p1363_signature = new Uint8Array(
     await crypto.subtle.sign(
       {
         name: "ECDSA",
@@ -519,7 +519,7 @@ async function generateSignature(params: SignatureParams) {
     ),
   );
 
-  const asn1Der_signature = joseToDer(p1336_signature, "ES256");
+  const asn1Der_signature = joseToDer(p1363_signature, "ES256");
 
   return asn1Der_signature;
 }
