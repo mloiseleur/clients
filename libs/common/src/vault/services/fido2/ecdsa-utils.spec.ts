@@ -54,4 +54,32 @@ describe("joseToDer", () => {
     );
     expect(result).toEqual(expected);
   });
+
+  it("should convert P1336 to DER when 'R' has leading zero and is negative and 'S' is positive", () => {
+    const signature = Fido2Utils.stringToBuffer(
+      "AKq25+LDn+n6XCsDiIKQc0z5MCjGESXBAwAT/U5iZPFCGeQbD2EEnoQrinxvrHGqH0g0e7ohnNa6EKdpX9GEXA==",
+    );
+
+    const result = joseToDer(signature, "ES256");
+
+    const expected = Fido2Utils.stringToBuffer(
+      "MEQCIACqtufiw5/p+lwrA4iCkHNM+TAoxhElwQMAE/1OYmTxAiBCGeQbD2EEnoQrinxvrHGqH0g0e7ohnNa6EKdpX9GEXA==",
+    );
+
+    expect(result).toEqual(expected);
+  });
+
+  it("should convert P1336 to DER when 'R' is positive and 'S' has leading zero and is negative ", () => {
+    const signature = Fido2Utils.stringToBuffer(
+      "KKq25+LDn+n6XCsDiIKQc0z5MCjGESXBAwAT/U5iZPEAyOQbD2EEnoQrinxvrHGqH0g0e7ohnNa6EKdpX9GEXA==",
+    );
+
+    const result = joseToDer(signature, "ES256");
+
+    const expected = Fido2Utils.stringToBuffer(
+      "MEQCICiqtufiw5/p+lwrA4iCkHNM+TAoxhElwQMAE/1OYmTxAiAAyOQbD2EEnoQrinxvrHGqH0g0e7ohnNa6EKdpX9GEXA==",
+    );
+
+    expect(result).toEqual(expected);
+  });
 });

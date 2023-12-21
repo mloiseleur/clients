@@ -90,10 +90,13 @@ export function joseToDer(signature: Uint8Array, alg: Alg) {
     signature.length,
   );
 
-  const rLength = paramBytes - rPadding + (rNeeds0x00 ? 1 : 0);
-  const sLength = paramBytes - sPadding + (sNeeds0x00 ? 1 : 0);
+  const rActualLength = paramBytes - rPadding;
+  const sActualLength = paramBytes - sPadding;
 
-  const rsBytes = 1 + 1 + rLength + 1 + 1 + sLength;
+  const rLength = rActualLength + (rNeeds0x00 ? 1 : 0);
+  const sLength = sActualLength + (sNeeds0x00 ? 1 : 0);
+
+  const rsBytes = 2 + rLength + 2 + sLength;
 
   const shortLength = rsBytes < MAX_OCTET;
 
@@ -107,24 +110,23 @@ export function joseToDer(signature: Uint8Array, alg: Alg) {
     dst[offset++] = MAX_OCTET | 1;
     dst[offset++] = rsBytes & 0xff;
   }
+
+  // Encoding 'R' component
   dst[offset++] = ENCODED_TAG_INT;
   dst[offset++] = rLength;
   if (rNeeds0x00) {
     dst[offset++] = 0;
-    dst.set(signature.subarray(0, paramBytes), offset);
-    offset += paramBytes;
-  } else {
-    dst.set(signature.subarray(rPadding, paramBytes), offset);
-    offset += rLength;
   }
+  dst.set(signature.subarray(rPadding, rPadding + rActualLength), offset);
+  offset += rActualLength;
+
+  // Encoding 'S' component
   dst[offset++] = ENCODED_TAG_INT;
   dst[offset++] = sLength;
   if (sNeeds0x00) {
     dst[offset++] = 0;
-    dst.set(signature.subarray(paramBytes), offset);
-  } else {
-    dst.set(signature.subarray(paramBytes + sPadding), offset);
   }
+  dst.set(signature.subarray(paramBytes + sPadding, paramBytes + sPadding + sActualLength), offset);
 
   return dst;
 }
