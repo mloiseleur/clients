@@ -158,19 +158,6 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (this.currentPlan && this.currentPlan.product !== ProductType.Enterprise) {
-      const upgradedPlan = this.passwordManagerPlans.find((plan) =>
-        this.currentPlan.product === ProductType.Free
-          ? plan.type === PlanType.FamiliesAnnually
-          : plan.upgradeSortOrder == this.currentPlan.upgradeSortOrder + 1,
-      );
-
-      this.plan = upgradedPlan.type;
-      this.product = upgradedPlan.product;
-
-      this.changedProduct();
-    }
-
     if (this.hasProvider) {
       this.formGroup.controls.businessOwned.setValue(true);
       this.changedOwnedBusiness();
@@ -402,45 +389,62 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
   changedProduct() {
     const selectedPlan = this.selectablePlans[0];
 
-    this.formGroup.controls.plan.setValue(selectedPlan.type);
+    this.setPlanType(selectedPlan.type);
+    this.handlePremiumAddonAccess(selectedPlan.PasswordManager.hasPremiumAccessOption);
+    this.handleAdditionalStorage(selectedPlan.PasswordManager.hasAdditionalStorageOption);
+    this.handleAdditionalSeats(selectedPlan.PasswordManager.hasAdditionalSeatsOption);
+    this.handleSecretsManagerForm();
+  }
 
-    // Handle premium access addon
-    this.formGroup.controls.premiumAccessAddon.setValue(
-      !selectedPlan.PasswordManager.hasPremiumAccessOption,
-    );
+  setPlanType(planType: PlanType) {
+    this.formGroup.controls.plan.setValue(planType);
+  }
 
-    // Handle additional storage
-    if (!selectedPlan.PasswordManager.hasAdditionalStorageOption) {
+  handlePremiumAddonAccess(hasPremiumAccessOption: boolean) {
+    this.formGroup.controls.premiumAccessAddon.setValue(!hasPremiumAccessOption);
+  }
+
+  handleAdditionalStorage(selectedPlanHasAdditionalStorageOption: boolean) {
+    if (!selectedPlanHasAdditionalStorageOption || !this.currentPlan) {
       this.formGroup.controls.additionalStorage.setValue(0);
-    } else if (this.currentPlan && this.organization.maxStorageGb) {
+      return;
+    }
+
+    if (this.organization?.maxStorageGb) {
       this.formGroup.controls.additionalStorage.setValue(
         this.organization.maxStorageGb - this.currentPlan.PasswordManager.baseStorageGb,
       );
     }
+  }
 
-    // Handle additional seats
-    if (!selectedPlan.PasswordManager.hasAdditionalSeatsOption) {
+  handleAdditionalSeats(selectedPlanHasAdditionalSeatsOption: boolean) {
+    if (!selectedPlanHasAdditionalSeatsOption) {
       this.formGroup.controls.additionalSeats.setValue(0);
-    } else {
-      const defaultAdditionalSeats =
-        !this.formGroup.controls.additionalSeats.value && !selectedPlan.PasswordManager.baseSeats
-          ? this.currentPlan?.PasswordManager.baseSeats || 1
-          : this.organization.seats;
-      this.formGroup.controls.additionalSeats.setValue(defaultAdditionalSeats);
+      return;
     }
 
-    // Handle secrets manager form
+    if (!this.currentPlan?.PasswordManager?.hasAdditionalSeatsOption) {
+      this.formGroup.controls.additionalSeats.setValue(this.currentPlan.PasswordManager.baseSeats);
+      return;
+    }
+
+    this.formGroup.controls.additionalSeats.setValue(this.organization.seats);
+  }
+
+  handleSecretsManagerForm() {
     if (this.planOffersSecretsManager) {
       this.secretsManagerForm.enable();
+    }
 
-      if (this.secretsManagerForm.controls.enabled) {
-        this.secretsManagerForm.controls.userSeats.setValue(this.sub.smSeats || 1);
-        this.secretsManagerForm.controls.additionalServiceAccounts.setValue(
-          this.sub.smServiceAccounts - this.currentPlan.SecretsManager.baseServiceAccount || 0,
-        );
-      }
-    } else {
-      this.secretsManagerForm.disable();
+    if (this.organization.useSecretsManager) {
+      this.secretsManagerForm.controls.enabled.setValue(true);
+    }
+
+    if (this.secretsManagerForm.controls.enabled.value) {
+      this.secretsManagerForm.controls.userSeats.setValue(this.sub?.smSeats || 1);
+      this.secretsManagerForm.controls.additionalServiceAccounts.setValue(
+        this.sub?.smServiceAccounts - this.currentPlan.SecretsManager?.baseServiceAccount || 0,
+      );
     }
 
     this.secretsManagerForm.updateValueAndValidity();
@@ -705,11 +709,15 @@ export class OrganizationPlansComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // If they already have SM enabled, bump them up to Teams and enable SM to maintain this access
-    const organization = this.organizationService.get(this.organizationId);
-    if (organization.useSecretsManager) {
-      this.formGroup.controls.product.setValue(ProductType.Teams);
-      this.secretsManagerForm.controls.enabled.setValue(true);
+    if (this.currentPlan && this.currentPlan.product !== ProductType.Enterprise) {
+      const upgradedPlan = this.passwordManagerPlans.find((plan) =>
+        this.currentPlan.product === ProductType.Free
+          ? plan.type === PlanType.FamiliesAnnually
+          : plan.upgradeSortOrder == this.currentPlan.upgradeSortOrder + 1,
+      );
+
+      this.plan = upgradedPlan.type;
+      this.product = upgradedPlan.product;
       this.changedProduct();
     }
   }
